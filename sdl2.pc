@@ -11,5 +11,5 @@ Version: 2.0.4
 Requires:
 Conflicts:
 Libs: -L${libdir} -Wl,-rpath,${libdir} -Wl,--enable-new-dtags -lSDL2 
-Libs.private: -lSDL2   -Wl,--no-undefined -lm -ldl -lpthread -lrt
+Libs.private: -lSDL2   -Wl,--no-undefined -lm -ldl -L/usr/local/lib -larcan_shmif -lEGL -lpthread -lrt
 Cflags: -I${includedir}/SDL2   -D_REENTRANT

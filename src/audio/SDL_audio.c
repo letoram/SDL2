@@ -47,6 +47,7 @@ static SDL_AudioDevice *open_devices[16];
 extern AudioBootStrap BSD_AUDIO_bootstrap;
 extern AudioBootStrap DSP_bootstrap;
 extern AudioBootStrap ALSA_bootstrap;
+extern AudioBootStrap ARCANAUDIO_bootstrap;
 extern AudioBootStrap PULSEAUDIO_bootstrap;
 extern AudioBootStrap QSAAUDIO_bootstrap;
 extern AudioBootStrap SUNAUDIO_bootstrap;
@@ -71,12 +72,15 @@ extern AudioBootStrap ANDROIDAUD_bootstrap;
 extern AudioBootStrap PSPAUD_bootstrap;
 extern AudioBootStrap SNDIO_bootstrap;
 extern AudioBootStrap EmscriptenAudio_bootstrap;
-
+extern AudioBootStrap Arcan_bootstrap;
 
 /* Available audio drivers */
 static const AudioBootStrap *const bootstrap[] = {
 #if SDL_AUDIO_DRIVER_PULSEAUDIO
     &PULSEAUDIO_bootstrap,
+#endif
+#if SDL_AUDIO_DRIVER_ARCAN
+    &ARCANAUDIO_bootstrap,
 #endif
 #if SDL_AUDIO_DRIVER_ALSA
     &ALSA_bootstrap,

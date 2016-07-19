@@ -305,6 +305,9 @@ $(objects)/SDL_dspaudio.lo: /home/vdw/intprj/SDL/src/audio/dsp/SDL_dspaudio.c
 $(objects)/SDL_alsa_audio.lo: /home/vdw/intprj/SDL/src/audio/alsa/SDL_alsa_audio.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
+$(objects)/SDL_pulseaudio.lo: /home/vdw/intprj/SDL/src/audio/pulseaudio/SDL_pulseaudio.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
 $(objects)/SDL_x11clipboard.lo: /home/vdw/intprj/SDL/src/video/x11/SDL_x11clipboard.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
@@ -354,6 +357,57 @@ $(objects)/edid-parse.lo: /home/vdw/intprj/SDL/src/video/x11/edid-parse.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
 $(objects)/imKStoUCS.lo: /home/vdw/intprj/SDL/src/video/x11/imKStoUCS.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_mirdyn.lo: /home/vdw/intprj/SDL/src/video/mir/SDL_mirdyn.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_mirevents.lo: /home/vdw/intprj/SDL/src/video/mir/SDL_mirevents.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_mirframebuffer.lo: /home/vdw/intprj/SDL/src/video/mir/SDL_mirframebuffer.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_mirmouse.lo: /home/vdw/intprj/SDL/src/video/mir/SDL_mirmouse.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_miropengl.lo: /home/vdw/intprj/SDL/src/video/mir/SDL_miropengl.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_mirvideo.lo: /home/vdw/intprj/SDL/src/video/mir/SDL_mirvideo.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_mirwindow.lo: /home/vdw/intprj/SDL/src/video/mir/SDL_mirwindow.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_arcanopengl.lo: /home/vdw/intprj/SDL/src/video/arcan/SDL_arcanopengl.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_arcanvideo.lo: /home/vdw/intprj/SDL/src/video/arcan/SDL_arcanvideo.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_arcanwindow.lo: /home/vdw/intprj/SDL/src/video/arcan/SDL_arcanwindow.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_waylanddyn.lo: /home/vdw/intprj/SDL/src/video/wayland/SDL_waylanddyn.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_waylandevents.lo: /home/vdw/intprj/SDL/src/video/wayland/SDL_waylandevents.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_waylandmouse.lo: /home/vdw/intprj/SDL/src/video/wayland/SDL_waylandmouse.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_waylandopengles.lo: /home/vdw/intprj/SDL/src/video/wayland/SDL_waylandopengles.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_waylandtouch.lo: /home/vdw/intprj/SDL/src/video/wayland/SDL_waylandtouch.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_waylandvideo.lo: /home/vdw/intprj/SDL/src/video/wayland/SDL_waylandvideo.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_waylandwindow.lo: /home/vdw/intprj/SDL/src/video/wayland/SDL_waylandwindow.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
 $(objects)/SDL_systhread.lo: /home/vdw/intprj/SDL/src/thread/pthread/SDL_systhread.c

@@ -1105,26 +1105,31 @@ dnl Check for Arcan
 CheckArcan()
 {
     AC_ARG_ENABLE(video-arcan,
-AC_HELP_STRING([--enable-video-arcan], [use Arcan video driver [[default=yes]]]),
-                  ,enable_video_mir=arcan)
+AC_HELP_STRING([--enable-video-arcan], [use Arcan audio/video driver [[default=yes]]]),
+                  ,enable_video_arcan=yes)
 
     if test x$enable_video = xyes -a x$enable_video_arcan = xyes; then
         AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
         AC_MSG_CHECKING(for Arcan support)
         video_arcan=no
+				audio_arcan=no
         if test x$PKG_CONFIG != xno; then
-            if $PKG_CONFIG --exists arcan_shmif egl ; then
+            if $PKG_CONFIG --exists arcan-shmif egl ; then
                 ARCAN_CFLAGS=`$PKG_CONFIG --cflags arcan-shmif egl`
                 ARCAN_LIBS=`$PKG_CONFIG --libs arcan-shmif egl`
                 save_CFLAGS="$CFLAGS"
                 CFLAGS="$save_CFLAGS $ARCAN_CFLAGS"
+								video_arcan=yes
+								audio_arcan=yes
             fi
         fi
-        AC_MSG_RESULT($video_arcan)
+        AC_MSG_RESULT($video_arcan $audio_arcan)
 
         if test x$video_arcan = xyes; then
             AC_DEFINE(SDL_VIDEO_DRIVER_ARCAN, 1, [ ])
+						AC_DEFINE(SDL_AUDIO_DRIVER_ARCAN, 1, [ ])
             SOURCES="$SOURCES $srcdir/src/video/arcan/*.c"
+						SOURCES="$SOURCES $srcdir/src/audio/arcan/*.c"
             EXTRA_CFLAGS="$EXTRA_CFLAGS $ARCAN_CFLAGS"
             AC_ARG_ENABLE(arcan-shared,
 AC_HELP_STRING([--enable-arcan-shared], [dynamically load Arcan support [[default=maybe]]]),
@@ -1146,7 +1151,7 @@ AC_HELP_STRING([--enable-arcan-shared], [dynamically load Arcan support [[defaul
             fi
             if test x$have_loadso = xyes && \
                test x$enable_arcan_shared = xyes && \
-               test x$arcanclient_lib != x then
+               test x$arcanclient_lib != x; then
                 echo "-- dynamic libarcan_shmif -> $arcanclient_lib"
                 AC_DEFINE_UNQUOTED(SDL_VIDEO_DRIVER_ARCAN_DYNAMIC, "$arcanclient_lib", [ ])
                 SUMMARY_video="${SUMMARY_video} arcan(dynamic)"
@@ -1156,6 +1161,7 @@ AC_HELP_STRING([--enable-arcan-shared], [dynamically load Arcan support [[defaul
                 SUMMARY_video="${SUMMARY_video} arcan"
             fi
             have_video=yes
+						have_audio=yes
         fi
     fi
 }
@@ -2974,6 +2980,7 @@ case "$host" in
         CheckOpenGLX11
         CheckOpenGLESX11
         CheckMir
+				CheckArcan
         CheckWayland
         CheckLibUDev
         CheckDBus

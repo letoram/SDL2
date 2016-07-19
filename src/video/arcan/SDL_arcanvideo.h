@@ -27,12 +27,37 @@
 #define _SDL_arcanvideo_h_
 
 #include <EGL/egl.h>
+#define WANT_ARCAN_SHMIF_HELPER
 #include <arcan_shmif.h>
+#include "SDL_mutex.h"
+
+/*
+ * This is shared between audio and video implementations as any negotiated
+ * connection support both, and some operations on the connection need
+ * synchronization (i.e. resize)
+ */
+typedef struct {
+    SDL_Window *main;
+    SDL_mutex* av_sync;
+    int refc;
+    size_t n_windows;
+    struct arcan_event *pqueue;
+    size_t pqueue_sz;
+    int mx;
+    struct arcan_shmif_cont clip_in, clip_out, popup, cursor, mcont;
+} Arcan_SDL_Meta;
 
 typedef struct {
-    arcan_shmif_cont con;
-    EGL_Surface surf;
-} ARCAN_Data;
+    struct arcan_shmif_cont *con;
+    unsigned tex_id, fbo_id, rbuf_id;
+} Arcan_WindowData;
+
+/*
+ * Since we have no guarantee that audio or video will be created first,
+ * we rely on a shared implementation and whoever gets there first sets
+ * things up
+ */
+extern int arcan_av_setup_primary();
 
 #endif /* _SDL_arcanvideo_h_ */
 

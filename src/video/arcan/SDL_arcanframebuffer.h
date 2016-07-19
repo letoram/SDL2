@@ -23,53 +23,24 @@
   Contributed by Bjorn Stahl, <contact@arcan-fe.com>
 */
 
-#ifndef _SDL_arcanwindow_h
-#define _SDL_arcanwindow_h
+#ifndef _SDL_arcanframebuffer_h
+#define _SDL_arcanframebuffer_h
 
 #include "../SDL_sysvideo.h"
-#include "SDL_syswm.h"
-
 #include "SDL_arcanvideo.h"
 
 extern int
-Arcan_CreateWindow(_THIS, SDL_Window* window);
+Arcan_CreateWindowFramebuffer(_THIS, SDL_Window* sdl_window, Uint32* format,
+                            void** pixels, int* pitch);
+
+extern int
+Arcan_UpdateWindowFramebuffer(_THIS, SDL_Window* sdl_window,
+                            const SDL_Rect* rects, int numrects);
 
 extern void
-Arcan_DestroyWindow(_THIS, SDL_Window* window);
+Arcan_DestroyWindowFramebuffer(_THIS, SDL_Window* sdl_window);
 
-extern void
-Arcan_SetWindowFullscreen(_THIS, SDL_Window* window,
-                          SDL_VideoDisplay* display,
-                          SDL_bool fullscreen);
-
-extern void
-Arcan_MaximizeWindow(_THIS, SDL_Window* window);
-
-extern void
-Arcan_MinimizeWindow(_THIS, SDL_Window* window);
-
-extern void
-Arcan_RestoreWindow(_THIS, SDL_Window* window);
-
-extern void
-Arcan_HideWindow(_THIS, SDL_Window* window);
-
-extern SDL_bool
-Arcan_GetWindowWMInfo(_THIS, SDL_Window* window, SDL_SysWMinfo* info);
-
-extern void
-Arcan_SetWindowSize(_THIS, SDL_Window* window);
-
-extern void
-Arcan_SetWindowMinimumSize(_THIS, SDL_Window* window);
-
-extern void
-Arcan_SetWindowMaximumSize(_THIS, SDL_Window* window);
-
-extern void
-Arcan_SetWindowTitle(_THIS, SDL_Window* window);
-
-#endif /* _SDL_arcanwindow_h */
+#endif /* _SDL_arcanframebuffer_h */
 
 /* vi: set ts=4 sw=4 expandtab: */
 

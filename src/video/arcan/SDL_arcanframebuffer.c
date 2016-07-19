@@ -19,51 +19,42 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-/*
-  Contributed by Bjorn Stahl, <contact@arcan-fe.com>
-*/
+#include "../../SDL_internal.h"
 
-#ifndef _SDL_arcangl_h
-#define _SDL_arcangl_h
-
-#include "SDL_arcanwindow.h"
+#if SDL_VIDEO_DRIVER_ARCAN
 
 #include "../SDL_egl_c.h"
+#include "../SDL_sysvideo.h"
+#include "SDL_arcanvideo.h"
+#include "SDL_arcanwindow.h"
 
-#define Arcan_EGL_GetSwapInterval SDL_EGL_GetSwapInterval
-#define Arcan_EGL_SetSwapInterval SDL_EGL_SetSwapInterval
+int
+Arcan_CreateWindowFramebuffer(_THIS, SDL_Window* sdl_window, Uint32* format,
+                            void** pixels, int* pitch)
+{
+	Arcan_WindowData* data = (Arcan_WindowData*) sdl_window->driverdata;
+	*format = SDL_PIXELFORMAT_ABGR8888;
+	*pixels = data->con->vidp;
+	*pitch = data->con->stride;
+	return 0;
+}
 
-extern void
-Arcan_GL_SwapWindow(_THIS, SDL_Window* window);
+int
+Arcan_UpdateWindowFramebuffer(_THIS, SDL_Window* sdl_window,
+                            const SDL_Rect* rects, int numrects)
+{
+	Arcan_WindowData* data = (Arcan_WindowData*) sdl_window->driverdata;
+	arcan_shmif_signal(data->con, SHMIF_SIGVID);
+	return 0;
+}
 
-enum arcan_fboop {
-	ARCAN_FBOOP_CREATE,
-	ARCAN_FBOOP_DESTROY,
-	ARCAN_FBOOP_RESIZE
-};
+void
+Arcan_DestroyWindowFramebuffer(_THIS, SDL_Window* sdl_window)
+{
+	Arcan_WindowData* data = (Arcan_WindowData*) sdl_window->driverdata;
+	if (data->con != arcan_shmif_primary(SHMIF_INPUT)){
+		arcan_shmif_drop(data->con);
+	}
+}
 
-extern void
-Arcan_GL_SetupFBO(_THIS, Arcan_WindowData* window, enum arcan_fboop);
-
-extern void
-Arcan_EGL_DeleteContext(_THIS, SDL_GLContext context);
-
-extern int
-Arcan_EGL_MakeCurrent(_THIS, SDL_Window* window, SDL_GLContext context);
-
-extern SDL_GLContext
-Arcan_EGL_CreateContext(_THIS, SDL_Window* window);
-
-extern int
-Arcan_EGL_LoadLibrary(_THIS, const char* path);
-
-extern void
-Arcan_EGL_UnloadLibrary(_THIS);
-
-extern void*
-Arcan_EGL_GetProcAddress(_THIS, const char* proc);
-
-#endif /* _SDL_arcangl_h */
-
-/* vi: set ts=4 sw=4 expandtab: */
-
+#endif

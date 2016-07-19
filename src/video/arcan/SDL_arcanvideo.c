@@ -22,133 +22,259 @@
 #include "../../SDL_internal.h"
 
 #if SDL_VIDEO_DRIVER_ARCAN
+#define TRACE(...)
+//#define TRACE(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
 
 #include "SDL_arcanwindow.h"
 #include "SDL_video.h"
+#include "SDL_stdinc.h"
 
 #include "SDL_arcanframebuffer.h"
-#include "SDL_arcanmouse.h"
 #include "SDL_arcanopengl.h"
 #include "SDL_arcanvideo.h"
+#include "SDL_arcanevent.h"
 
-#include "SDL_arcandyn.h"
-
-#define ARCAN_DRIVER_NAME "arcan"
+// #include "SDL_arcandyn.h"
 
 static int
-ARCAN_VideoInit(_THIS);
+Arcan_VideoInit(_THIS);
 
 static void
-ARCAN_VideoQuit(_THIS);
-
-static int
-ARCAN_GetDisplayBounds(_THIS, SDL_VideoDisplay* display, SDL_Rect* rect);
-
-static void
-ARCAN_GetDisplayModes(_THIS, SDL_VideoDisplay* sdl_display);
-
-static int
-ARCAN_SetDisplayMode(_THIS, SDL_VideoDisplay* sdl_display, SDL_DisplayMode* mode);
+Arcan_VideoQuit(_THIS);
 
 static SDL_WindowShaper*
-ARCAN_CreateShaper(SDL_Window* window)
+Arcan_CreateShaper(SDL_Window* window)
 {
+    TRACE("CreateShaper");
     return NULL;
 }
 
 static int
-ARCAN_SetWindowShape(SDL_WindowShaper* shaper, SDL_Surface* shape, SDL_WindowShapeMode* shape_mode)
+Arcan_SetWindowShape(SDL_WindowShaper* shaper, SDL_Surface* shape, SDL_WindowShapeMode* shape_mode)
 {
+    TRACE("SetWindowShape");
     return SDL_Unsupported();
 }
 
 static int
-ARCAN_ResizeWindowShape(SDL_Window* window)
+Arcan_ResizeWindowShape(SDL_Window* window)
 {
+    TRACE("ResizeWindowShape");
     return SDL_Unsupported();
 }
 
 static int
-ARCAN_Available()
+Arcan_Available()
 {
     return getenv("ARCAN_CONNPATH") != NULL;
 }
 
+/*
+ * All display- related properties should be deferred until we get a valid
+ * DISPLAYHINT event in the Event pump
+ */
 static void
-ARCAN_DeleteDevice(SDL_VideoDevice* device)
+Arcan_DeleteDevice(SDL_VideoDevice* device)
 {
+    TRACE("DeleteDevice");
     SDL_free(device);
-    SDL_ARCAN_UnloadSymbols();
+//    SDL_Arcan_UnloadSymbols();
+}
+
+static int
+Arcan_GetDisplayBounds(_THIS, SDL_VideoDisplay * display, SDL_Rect * rect)
+{
+    TRACE("GetDisplayBounds");
+    rect->x = 0;
+    rect->y = 0;
+    rect->w = PP_SHMPAGE_MAXW;
+    rect->h = PP_SHMPAGE_MAXH;
+    return 0;
+}
+
+static int
+Arcan_GetDisplayDPI(_THIS, SDL_VideoDisplay * display, float * ddpi, float * hdpi, float *vdpi)
+{
+    return SDL_SetError("Couldn't get DPI");
+}
+
+int
+Arcan_VideoInit(_THIS)
+{
+    SDL_VideoDisplay display;
+    SDL_DisplayMode mode;
+    TRACE("VideoInit");
+
+    SDL_zero(mode);
+    SDL_zero(display);
+
+    display.desktop_mode = mode;
+    display.current_mode = mode;
+/* refresh-rate is dynamic so don't care */
+/* TODO: probe/ support other build-time formats, check the SHMIF_RGBA packing macro */
+    mode.format = SDL_PIXELFORMAT_ABGR8888;
+    mode.driverdata = NULL;
+
+    SDL_AddVideoDisplay(&display);
+    return 1;
 }
 
 void
-ARCAN_PumpEvents(_THIS)
+Arcan_VideoQuit(_THIS)
 {
-/* grab window-data and run its event loop, translate */
+    struct arcan_shmif_cont *cont = arcan_shmif_primary(SHMIF_INPUT);
+    Arcan_SDL_Meta *ameta = (Arcan_SDL_Meta *) cont->user;
+    TRACE("VideoQuit");
+
+    SDL_LockMutex(ameta->av_sync);
+    ameta->refc--;
+    SDL_UnlockMutex(ameta->av_sync);
+
+    if (0 == ameta->refc){
+        arcan_shmif_drop(cont);
+        SDL_DestroyMutex(ameta->av_sync);
+        SDL_free(ameta);
+        arcan_shmif_setprimary(SHMIF_INPUT, NULL);
+    }
+
+    SDL_EGL_UnloadLibrary(_this);
+
+    _this->driverdata = NULL;
+}
+
+static void
+Arcan_GetDisplayModes(_THIS, SDL_VideoDisplay* sdl_display)
+{
+    TRACE("GetDisplayModes");
+}
+
+static int
+Arcan_SetDisplayMode(_THIS, SDL_VideoDisplay* sdl_display, SDL_DisplayMode* mode)
+{
+    TRACE("SetDisplayMode");
+    return SDL_Unsupported();
+}
+
+/*
+ * need to cover:
+ *  1. no connection
+ *  2. connection, but no SDL metadata
+ *  3. connection and SDL metdata, return OK
+ */
+int arcan_av_setup_primary()
+{
+    Arcan_SDL_Meta *arcan_data = NULL;
+    bool local_cont = false;
+    struct arcan_shmif_cont *cont = arcan_shmif_primary(SHMIF_INPUT);
+    if (!cont){
+        cont = (struct arcan_shmif_cont *) SDL_calloc(1,
+                                            sizeof(struct arcan_shmif_cont));
+        if (!cont){
+            return SDL_OutOfMemory();
+        }
+        *cont = arcan_shmif_open(SEGID_GAME, SHMIF_ACQUIRE_FATALFAIL, NULL);
+        local_cont = true;
+    }
+
+/* no SDL metadata */
+    arcan_data = (Arcan_SDL_Meta *) cont->user;
+    if (!arcan_data){
+        arcan_data = SDL_calloc(1, sizeof(Arcan_SDL_Meta));
+        if (!arcan_data){
+            if (local_cont){
+                arcan_shmif_drop(cont);
+            }
+            return SDL_OutOfMemory();
+        }
+        arcan_data->av_sync = SDL_CreateMutex();
+        if (!arcan_data->av_sync){
+            SDL_free(arcan_data);
+            return SDL_OutOfMemory();
+        }
+
+        arcan_data->mcont = *cont;
+        arcan_shmif_setprimary(SHMIF_INPUT, &arcan_data->mcont);
+        arcan_data->mcont.user = arcan_data;
+    }
+
+    return 0;
 }
 
 static SDL_VideoDevice*
-ARCAN_CreateDevice(int device_index)
+Arcan_CreateDevice(int device_index)
 {
-    ARCAN_Data* arcan_data;
-    SDL_VideoDevice* device = NULL;
+    SDL_VideoDevice *device = NULL;
+    Arcan_SDL_Meta *arcan_data;
+    TRACE("CreateDevice");
 
-    if (!SDL_ARCAN_LoadSymbols()) {
+/*    if (!SDL_Arcan_LoadSymbols()) {
+        return NULL;
+    }
+*/
+
+/*
+ * There may already be a global connection provided from Audio setup or
+ * elsewhere (e.g. someone using X functions to setup GLX), so we need to
+ * try with arcan_av_setup_primary
+ */
+    if (arcan_av_setup_primary() != 0){
+        return NULL;
+    }
+
+    arcan_data = (Arcan_SDL_Meta *) arcan_shmif_primary(SHMIF_INPUT)->user;
+    arcan_data->refc++;
+
+/*
+ * And it's possible to get a connection that can't handle 3D but is still
+ * useful for framebuffer rendering, which depends on the window type
+ * being requested.
+ */
+    if (SHMIFEXT_OK != arcan_shmifext_headless_setup(&arcan_data->mcont,
+                                    arcan_shmifext_headless_defaults()))
+    {
         return NULL;
     }
 
     device = SDL_calloc(1, sizeof(SDL_VideoDevice));
-    if (!device) {
-        SDL_ARCAN_UnloadSymbols();
-        SDL_OutOfMemory();
-        return NULL;
-    }
-
-    arcan_data = SDL_calloc(1, sizeof(ARCAN_Data));
-    if (!arcan_data) {
-        SDL_free(device);
-        SDL_ARCAN_UnloadSymbols();
-        SDL_OutOfMemory();
-        return NULL;
-    }
-
     device->driverdata = arcan_data;
 
     /* arcanvideo */
-    device->VideoInit        = ARCAN_VideoInit;
-    device->VideoQuit        = ARCAN_VideoQuit;
-    device->GetDisplayBounds = ARCAN_GetDisplayBounds;
-    device->GetDisplayModes  = ARCAN_GetDisplayModes;
-    device->SetDisplayMode   = ARCAN_SetDisplayMode;
-    device->free             = ARCAN_DeleteDevice;
+    device->VideoInit        = Arcan_VideoInit;
+    device->VideoQuit        = Arcan_VideoQuit;
+    device->GetDisplayBounds = Arcan_GetDisplayBounds;
+    device->GetDisplayModes  = Arcan_GetDisplayModes;
+    device->SetDisplayMode   = Arcan_SetDisplayMode;
+    device->GetDisplayDPI    = Arcan_GetDisplayDPI;
+    device->free             = Arcan_DeleteDevice;
 
     /* arcanopengles */
-    device->GL_SwapWindow      = ARCAN_GL_SwapWindow;
-    device->GL_MakeCurrent     = ARCAN_GL_MakeCurrent;
-    device->GL_CreateContext   = ARCAN_GL_CreateContext;
-    device->GL_DeleteContext   = ARCAN_GL_DeleteContext;
-    device->GL_LoadLibrary     = ARCAN_GL_LoadLibrary;
-    device->GL_UnloadLibrary   = ARCAN_GL_UnloadLibrary;
-    device->GL_GetSwapInterval = ARCAN_GL_GetSwapInterval;
-    device->GL_SetSwapInterval = ARCAN_GL_SetSwapInterval;
-    device->GL_GetProcAddress  = ARCAN_GL_GetProcAddress;
+    device->GL_SwapWindow      = Arcan_GL_SwapWindow;
+    device->GL_MakeCurrent     = Arcan_EGL_MakeCurrent;
+    device->GL_CreateContext   = Arcan_EGL_CreateContext;
+    device->GL_DeleteContext   = Arcan_EGL_DeleteContext;
+    device->GL_LoadLibrary     = Arcan_EGL_LoadLibrary;
+    device->GL_UnloadLibrary   = Arcan_EGL_UnloadLibrary;
+    device->GL_GetSwapInterval = Arcan_EGL_GetSwapInterval;
+    device->GL_SetSwapInterval = Arcan_EGL_SetSwapInterval;
+    device->GL_GetProcAddress  = Arcan_EGL_GetProcAddress;
 
     /* arcanwindow */
-    device->CreateWindow         = ARCAN_CreateWindow;
-    device->DestroyWindow        = ARCAN_DestroyWindow;
-    device->GetWindowWMInfo      = ARCAN_GetWindowWMInfo;
-    device->SetWindowFullscreen  = ARCAN_SetWindowFullscreen;
-    device->MaximizeWindow       = ARCAN_MaximizeWindow;
-    device->MinimizeWindow       = ARCAN_MinimizeWindow;
-    device->RestoreWindow        = ARCAN_RestoreWindow;
-    device->ShowWindow           = ARCAN_RestoreWindow;
-    device->HideWindow           = ARCAN_HideWindow;
-    device->SetWindowSize        = ARCAN_SetWindowSize;
-    device->SetWindowMinimumSize = ARCAN_SetWindowMinimumSize;
-    device->SetWindowMaximumSize = ARCAN_SetWindowMaximumSize;
-    device->SetWindowTitle       = ARCAN_SetWindowTitle;
+    device->CreateWindow         = Arcan_CreateWindow;
+    device->DestroyWindow        = Arcan_DestroyWindow;
+    device->GetWindowWMInfo      = Arcan_GetWindowWMInfo;
+    device->SetWindowFullscreen  = Arcan_SetWindowFullscreen;
+    device->MaximizeWindow       = Arcan_MaximizeWindow;
+    device->MinimizeWindow       = Arcan_MinimizeWindow;
+    device->RestoreWindow        = Arcan_RestoreWindow;
+    device->ShowWindow           = Arcan_RestoreWindow;
+    device->HideWindow           = Arcan_HideWindow;
+    device->SetWindowSize        = Arcan_SetWindowSize;
+    device->SetWindowMinimumSize = Arcan_SetWindowMinimumSize;
+    device->SetWindowMaximumSize = Arcan_SetWindowMaximumSize;
+    device->SetWindowTitle       = Arcan_SetWindowTitle;
 
     device->CreateWindowFrom     = NULL;
+    /* set as pending, request subsegment, on accept, bind and draw */
     device->SetWindowIcon        = NULL;
     device->RaiseWindow          = NULL;
     device->SetWindowBordered    = NULL;
@@ -156,22 +282,24 @@ ARCAN_CreateDevice(int device_index)
     device->GetWindowGammaRamp   = NULL;
     device->SetWindowGrab        = NULL;
     device->OnWindowEnter        = NULL;
+
+    /* we can do a viewport hint */
     device->SetWindowPosition    = NULL;
 
-    /* arcanframebuffer */
-    device->CreateWindowFramebuffer  = ARCAN_CreateWindowFramebuffer;
-    device->UpdateWindowFramebuffer  = ARCAN_UpdateWindowFramebuffer;
-    device->DestroyWindowFramebuffer = ARCAN_DestroyWindowFramebuffer;
+    device->CreateWindowFramebuffer  = Arcan_CreateWindowFramebuffer;
+    device->UpdateWindowFramebuffer  = Arcan_UpdateWindowFramebuffer;
+    device->DestroyWindowFramebuffer = Arcan_DestroyWindowFramebuffer;
 
-    device->shape_driver.CreateShaper      = ARCAN_CreateShaper;
-    device->shape_driver.SetWindowShape    = ARCAN_SetWindowShape;
-    device->shape_driver.ResizeWindowShape = ARCAN_ResizeWindowShape;
+    device->shape_driver.CreateShaper      = Arcan_CreateShaper;
+    device->shape_driver.SetWindowShape    = Arcan_SetWindowShape;
+    device->shape_driver.ResizeWindowShape = Arcan_ResizeWindowShape;
 
-    device->PumpEvents = ARCAN_PumpEvents;
+    device->PumpEvents = Arcan_PumpEvents;
 
     /* arcan does that to us based on registered archetype already */
     device->SuspendScreenSaver = NULL;
 
+    /* can map to a simple cursor hint and a position */
     device->StartTextInput   = NULL;
     device->StopTextInput    = NULL;
     device->SetTextInputRect = NULL;
@@ -195,102 +323,12 @@ ARCAN_CreateDevice(int device_index)
     return device;
 }
 
-VideoBootStrap ARCAN_bootstrap = {
-    ARCAN_DRIVER_NAME, "SDL Arcan video driver",
-    ARCAN_Available, ARCAN_CreateDevice
+VideoBootStrap Arcan_bootstrap = {
+    "Arcan", "SDL Arcan video driver",
+    Arcan_Available, Arcan_CreateDevice
 };
 
-static void
-ARCAN_SetCurrentDisplayMode(arcanDisplayOutput const* out, SDL_VideoDisplay* display)
-{
-    SDL_DisplayMode mode = {
-        .format = SDL_PIXELFORMAT_RGB888,
-        .w = out->modes[out->current_mode].horizontal_resolution,
-        .h = out->modes[out->current_mode].vertical_resolution,
-        .refresh_rate = out->modes[out->current_mode].refresh_rate,
-        .driverdata = NULL
-    };
-
-    display->desktop_mode = mode;
-    display->current_mode = mode;
-}
-
-static void
-ARCAN_AddAllModesFromDisplay(arcanDisplayOutput const* out, SDL_VideoDisplay* display)
-{
-    int n_mode;
-    for (n_mode = 0; n_mode < out->num_modes; ++n_mode) {
-        SDL_DisplayMode mode = {
-            .format = SDL_PIXELFORMAT_RGB888,
-            .w = out->modes[n_mode].horizontal_resolution,
-            .h = out->modes[n_mode].vertical_resolution,
-            .refresh_rate = out->modes[n_mode].refresh_rate,
-            .driverdata = NULL
-        };
-
-        SDL_AddDisplayMode(display, &mode);
-    }
-}
-
-static void
-ARCAN_InitDisplays(_THIS)
-{
-}
-
-int
-ARCAN_VideoInit(_THIS)
-{
-    ARCAN_Data* arcan_data = _this->driverdata;
-    arcan_data->conn = arcan_shmif_open(SEGID_GAME, SHMIF_ACQUIRE_FATALFAIL, &args);
-    arcan_data->current_window = NULL;
-    arcan_shmif_setprimary(SHMIF_INPUT, &arcan_data->conn);
-
-/* we don't really care (unless we are forced to readback) */
-    arcan_data->pixel_format   = arcan_pixel_format_invalid;
-
-    ARCAN_InitDisplays(_this);
-    ARCAN_InitMouse();
-
-    return 0;
-}
-
-void
-ARCAN_VideoQuit(_THIS)
-{
-    ARCAN_Data* arcan_data = _this->driverdata;
-
-    ARCAN_GL_DeleteContext(_this, NULL);
-    ARCAN_GL_UnloadLibrary(_this);
-
-    arcan_shmif_drop(&arcan_data->conn);
-
-    SDL_free(arcan_data);
-    _this->driverdata = NULL;
-}
-
-static int
-ARCAN_GetDisplayBounds(_THIS, SDL_VideoDisplay* display, SDL_Rect* rect)
-{
-    ARCAN_Data* arcan_data = _this->driverdata;
-    int d;
-
-/* set rect to width / height */
-
-    return 0;
-}
-
-static void
-ARCAN_GetDisplayModes(_THIS, SDL_VideoDisplay* sdl_display)
-{
-}
-
-static int
-ARCAN_SetDisplayMode(_THIS, SDL_VideoDisplay* sdl_display, SDL_DisplayMode* mode)
-{
-    return 0;
-}
-
-#endif /* SDL_VIDEO_DRIVER_ARCAN */
+#endif /* SDL_VIDEO_DRIVER_Arcan */
 
 /* vi: set ts=4 sw=4 expandtab: */
 

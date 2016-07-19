@@ -296,7 +296,7 @@ dep_option(VIDEO_WAYLAND_QT_TOUCH  "QtWayland server support for Wayland video d
 set_option(VIDEO_MIR           "Use Mir video driver" ${UNIX_SYS})
 dep_option(MIR_SHARED          "Dynamically load Mir support" ON "VIDEO_MIR" OFF)
 set_option(VIDEO_RPI           "Use Raspberry Pi video driver" ${UNIX_SYS})
-set_option(VIDEO_ARCAN         "Use Arcan Audio/Video driver" ${UNIX_SYS})
+set_option(DRIVER_ARCAN        "Use Arcan Audio/Video driver" ${UNIX_SYS})
 set_option(ARCAN_SHARED        "Dynamically load Arcan support" ON "VIDEO_ARCAN" OFF)
 dep_option(X11_SHARED          "Dynamically load X11 support" ON "VIDEO_X11" OFF)
 set(SDL_X11_OPTIONS Xcursor Xinerama XInput Xrandr Xscrnsaver XShape Xvm)

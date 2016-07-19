@@ -691,19 +691,16 @@ endmacro()
 # - HAVE_DLOPEN opt
 # Requires pkgtool
 macro(CheckArcan)
-  if(VIDEO_ARCAN)
-		find_package(arcan_shmif)
-    if(ARCAN_SHMIF_FOUND)
-      link_directories(
-			    ${ARCAN_SHMIF_LIBRARY_PATH}
-      )
-      include_directories(
-          ${ARCAN_SHMIF_INCLUDE_DIR}
-      )
+  if(DRIVER_ARCAN)
+		pkg_check_modules(PKG_ASHMIF arcan-shmif)
+    if(PKG_ASHMIF_FOUND)
+			list(APPEND EXTRA_CFLAGS ${PKG_ASHMIF_CFLAGS})
       set(HAVE_VIDEO_ARCAN TRUE)
+			set(HAVE_AUDIO_ARCAN TRUE)
       set(HAVE_SDL_VIDEO TRUE)
+			set(HAVE_SDL_AUDIO TRUE)
 
-      file(GLOB ARCAN_SOURCES ${SDL2_SOURCE_DIR}/src/video/arcan/*.c)
+      file(GLOB ARCAN_SOURCES ${SDL2_SOURCE_DIR}/src/video/arcan/*.c ${SDL2_SOURCE_DIR}/src/audio/arcan/*.c)
       set(SOURCE_FILES ${SOURCE_FILES} ${ARCAN_SOURCES})
 
       if(ARCAN_SHARED)
@@ -712,13 +709,15 @@ macro(CheckArcan)
         else()
           FindLibraryAndSONAME(arcan_shmif)
           set(SDL_VIDEO_DRIVER_ARCAN_DYNAMIC "\"${ARCAN_CLIENT_LIB_SONAME}\"")
+					set(SDL_AUDIO_DRIVER_ARCAN_DYNAMIC "\"${ARCAN_CLIENT_LIB_SONAME}\"")
           set(HAVE_ARCAN_SHARED TRUE)
         endif()
       else()
-        set(EXTRA_LIBS ${ARCAN_SHMIF_LIBRARY} ${EXTRA_LIBS})
+        list(APPEND EXTRA_LDFLAGS ${PKG_ASHMIF_LDFLAGS})
       endif()
 
       set(SDL_VIDEO_DRIVER_ARCAN 1)
+			set(SDL_AUDIO_DRIVER_ARCAN 1) # they come together
     endif()
   endif()
 endmacro()
