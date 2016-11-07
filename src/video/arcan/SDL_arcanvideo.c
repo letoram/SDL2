@@ -22,8 +22,8 @@
 #include "../../SDL_internal.h"
 
 #if SDL_VIDEO_DRIVER_ARCAN
-#define TRACE(...)
-//#define TRACE(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
+//#define TRACE(...)
+#define TRACE(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
 
 #include "SDL_arcanwindow.h"
 #include "SDL_video.h"
@@ -84,23 +84,52 @@ Arcan_DeleteDevice(SDL_VideoDevice* device)
 static int
 Arcan_GetDisplayBounds(_THIS, SDL_VideoDisplay * display, SDL_Rect * rect)
 {
+    Arcan_SDL_Meta *arcan_data = _this->driverdata;
+    struct arcan_shmif_initial* initial = NULL;
+    arcan_shmif_initial(&arcan_data->mcont, &initial);
     TRACE("GetDisplayBounds");
+
     rect->x = 0;
     rect->y = 0;
-    rect->w = PP_SHMPAGE_MAXW;
-    rect->h = PP_SHMPAGE_MAXH;
+    if (initial && initial->display_width_px && initial->display_height_px){
+        rect->w = initial->display_width_px;
+        rect->h = initial->display_height_px;
+    }
+    else {
+        rect->w = arcan_data->mcont.w <= 32 ? 640 : arcan_data->mcont.w;
+        rect->h = arcan_data->mcont.h <= 32 ? 480 : arcan_data->mcont.h;
+    }
     return 0;
 }
 
 static int
 Arcan_GetDisplayDPI(_THIS, SDL_VideoDisplay * display, float * ddpi, float * hdpi, float *vdpi)
 {
+    Arcan_SDL_Meta *arcan_data = _this->driverdata;
+    struct arcan_shmif_initial* initial;
+    arcan_shmif_initial(&arcan_data->mcont, &initial);
+    if (initial && initial->density > 0){
+        float nd = initial->density * 2.54;
+        if (*ddpi){
+            *ddpi = nd;
+        }
+        if (*hdpi){
+            *hdpi = nd;
+        }
+        if (*vdpi){
+            *vdpi = nd;
+        }
+        return 0;
+    }
+
     return SDL_SetError("Couldn't get DPI");
 }
 
 int
 Arcan_VideoInit(_THIS)
 {
+    Arcan_SDL_Meta *arcan_data = _this->driverdata;
+    struct arcan_shmif_initial* initial;
     SDL_VideoDisplay display;
     SDL_DisplayMode mode;
     TRACE("VideoInit");
@@ -108,14 +137,27 @@ Arcan_VideoInit(_THIS)
     SDL_zero(mode);
     SDL_zero(display);
 
-    display.desktop_mode = mode;
-    display.current_mode = mode;
-/* refresh-rate is dynamic so don't care */
-/* TODO: probe/ support other build-time formats, check the SHMIF_RGBA packing macro */
+    arcan_shmif_initial(&arcan_data->mcont, &initial);
+    if (initial && initial->display_width_px && initial->display_height_px){
+        mode.w = initial->display_width_px;
+        mode.h = initial->display_height_px;
+        mode.refresh_rate = initial->rate;
+    }
+    else {
+        mode.w = arcan_data->mcont.w;
+        mode.h = arcan_data->mcont.h;
+    }
+
     mode.format = SDL_PIXELFORMAT_ABGR8888;
     mode.driverdata = NULL;
 
+    display.desktop_mode = mode;
+    display.current_mode = mode;
     SDL_AddVideoDisplay(&display);
+    SDL_AddDisplayMode(&display, &mode);
+    mode.w = arcan_data->mcont.w;
+    mode.h = arcan_data->mcont.h;
+    SDL_AddDisplayMode(&display, &mode);
     return 1;
 }
 
@@ -182,6 +224,7 @@ int arcan_av_setup_primary()
         arcan_data = SDL_calloc(1, sizeof(Arcan_SDL_Meta));
         if (!arcan_data){
             if (local_cont){
+                TRACE("dropping");
                 arcan_shmif_drop(cont);
             }
             return SDL_OutOfMemory();
@@ -223,17 +266,6 @@ Arcan_CreateDevice(int device_index)
 
     arcan_data = (Arcan_SDL_Meta *) arcan_shmif_primary(SHMIF_INPUT)->user;
     arcan_data->refc++;
-
-/*
- * And it's possible to get a connection that can't handle 3D but is still
- * useful for framebuffer rendering, which depends on the window type
- * being requested.
- */
-    if (SHMIFEXT_OK != arcan_shmifext_headless_setup(&arcan_data->mcont,
-                                    arcan_shmifext_headless_defaults()))
-    {
-        return NULL;
-    }
 
     device = SDL_calloc(1, sizeof(SDL_VideoDevice));
     device->driverdata = arcan_data;

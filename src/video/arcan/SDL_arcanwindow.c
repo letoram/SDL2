@@ -35,49 +35,74 @@
 #include "SDL_arcanwindow.h"
 #include "SDL_arcanopengl.h"
 
-#define TRACE(...)
-//#define TRACE(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
+//#define TRACE(...)
+#define TRACE(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
 
 int
 Arcan_CreateWindow(_THIS, SDL_Window* window)
 {
     Arcan_SDL_Meta *meta = _this->driverdata;
-    Arcan_WindowData *data;
-    struct arcan_shmif_cont *con;
+    Arcan_WindowData *data = SDL_calloc(sizeof(Arcan_WindowData), 1);
     TRACE("Create Window");
-/*
- * FIXME: secondary windows not yet working, need to request
- * a new one, map it and so on
- */
-/*    if (meta->main == NULL){ */
+    if (!data)
+        return SDL_SetError("Out of Memory");
+
+    if (meta->main){
+        Arcan_WindowData *pdata = meta->main->driverdata;
+        int index = 0;
+        struct arcan_event acqev = {
+            .category = EVENT_EXTERNAL,
+            .ext.kind = ARCAN_EVENT(SEGREQ),
+            .ext.segreq.width = window->w,
+            .ext.segreq.height = window->h,
+            .ext.segreq.kind = SEGID_GAME,
+            .ext.segreq.id = 0xfeedface
+        };
+
+        if (meta->wndalloc == 255){
+            return SDL_SetError("Out of Memory");
+        }
+        while (meta->wndalloc & (1 << index))
+            index++;
+
+        arcan_shmif_enqueue(&meta->mcont, &acqev);
+        if (arcan_shmif_acquireloop(&meta->mcont,
+                                    &acqev, &pdata->pqueue, &pdata->pqueue_sz)){
+            data->con = &meta->windows[index];
+            *(data->con) = arcan_shmif_acquire(&meta->mcont,NULL,SEGID_GAME, 0);
+            meta->wndalloc |= 1 << index;
+        }
+        else {
+            if (!data->pqueue){
+                SDL_free(data);
+                return SDL_SetError("Out of Memory");
+            }
+            if (data->pqueue_sz < 0){ /* game over */
+                SDL_free(data);
+                return SDL_SetError("Shmif- state inconsistent\n");
+            }
+            return SDL_SetError("Arcan rejected window request\n");
+        }
+    }
+    else {
         meta->main = window;
-        con = &meta->mcont;
-/*    }
-    else { */
-//        printf("need to create secondary window, missing\n");
- //       return -1;
- //
-//    }
+        data->con = &meta->mcont;
+    }
 
-    data = (Arcan_WindowData *) SDL_calloc(sizeof(Arcan_WindowData), 1);
     window->driverdata = data;
-    data->con = con;
-
-    /* Need this to be a critical section since we have audio running
-     * in a separate thread */
-    SDL_LockMutex(meta->av_sync);
-    arcan_shmif_resize(con, window->w, window->h);
-    SDL_UnlockMutex(meta->av_sync);
+    window->x = 0;
+    window->y = 0;
 
     if (window->flags & SDL_WINDOW_OPENGL){
-        con->hints = SHMIF_RHINT_ORIGO_LL;
-        Arcan_GL_SetupFBO(_this, data, ARCAN_FBOOP_CREATE);
+        data->con->hints = SHMIF_RHINT_ORIGO_LL;
+        arcan_shmif_resize(data->con, window->w, window->h);
     }
-    else
-        ;
-
-    SDL_SetMouseFocus(window);
-    SDL_SetKeyboardFocus(window);
+    else{
+        data->con->hints = 0;
+        arcan_shmif_resize(data->con, window->w, window->h);
+    }
+    window->w = data->con->w;
+    window->h = data->con->h;
 
     return 0;
 }
@@ -85,13 +110,24 @@ Arcan_CreateWindow(_THIS, SDL_Window* window)
 void
 Arcan_DestroyWindow(_THIS, SDL_Window* window)
 {
+    Arcan_SDL_Meta *meta = _this->driverdata;
+    Arcan_WindowData *data = window->driverdata;
     TRACE("DestroyWindow");
-/*
-    glDeleteFramebuffers(1, &wnd->fbo_id);
-    wnd->fbo_id = GL_NONE;
-    Arcan_GL_SetupFBO(_thi
-*/
-/* TODO: wrap to shmif_drop */
+
+    if (meta->main == window){
+        meta->main = NULL;
+/* FIXME: send viewport hint to hide main connection */
+    }
+    else {
+    /* only need to clear pqueue on the mcont */
+        if (data){
+            meta->wndalloc &= ~(1 << data->index);
+            arcan_shmif_drop(data->con);
+            data->con = NULL;
+        }
+    }
+    SDL_free(window->driverdata);
+    window->driverdata = NULL;
 }
 
 void
@@ -99,8 +135,10 @@ Arcan_SetWindowFullscreen(_THIS, SDL_Window* window,
                           SDL_VideoDisplay* display,
                           SDL_bool fullscreen)
 {
+/*
+ * Not our decision, we can try a viewport hint
+ */
     TRACE("SetWindowFullscreen(%d)", fullscreen);
-/* not our decision */
 }
 
 void

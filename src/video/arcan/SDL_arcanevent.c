@@ -189,7 +189,7 @@ static void process_target(struct arcan_shmif_cont* prim,
 {
     switch (ev.kind){
     case TARGET_COMMAND_EXIT:
-/* FIXME: send shutdown event to windows */
+        SDL_SendWindowEvent(wnd, SDL_WINDOWEVENT_CLOSE, 0, 0);
     break;
     case TARGET_COMMAND_FONTHINT:
 /* ignore, we don't have a way to communicate font changes within SDL */
@@ -212,7 +212,9 @@ static void process_target(struct arcan_shmif_cont* prim,
         break;
         case 2:
         case 3:
-/* FIXME: drop all subwindows that are used (popup, ...) and re-request */
+/* FIXME: drop all subwindows that are used (popup, ...) and re-request,
+ * we may also need to indicate that we have lost GL context, same for
+ * DEVICE_NODE */
         break;
         }
     break;
@@ -225,16 +227,22 @@ static void process_target(struct arcan_shmif_cont* prim,
  * counter in the related structure */
     break;
     case TARGET_COMMAND_DISPLAYHINT:
-/* FIXME: map to resize- events,
- * SDL_SendWindowEvent(wnd, SDL_WINDOWEVENT_RESIZED, neww, newh) IF
- * the window is marked as resizable.
- * indicate DPI (if possible), map to
- * visibile / invisible / focused / unfocused */
+        if ((ev.ioevs[0].iv && ev.ioevs[1].iv) &&
+            (ev.ioevs[0].iv != cur->w || ev.ioevs[1].iv != cur->h)){
+            if (wnd->flags & SDL_WINDOW_RESIZABLE){
+/* FIXME: we need to lock audio here if we're on the primary segment */
+                if (arcan_shmif_resize(cur, ev.ioevs[0].iv, ev.ioevs[1].iv)){
+                    arcan_shmifext_make_current(cur);
+                    SDL_SendWindowEvent(wnd, SDL_WINDOWEVENT_RESIZED,
+                                        ev.ioevs[0].iv, ev.ioevs[1].iv);
+                }
+            }
+        }
+/* FIXME: we also have SDL_WINDOWEVENT_HIDDEN, SDL_WINDOWEVENT_SHOWN */
     break;
     case TARGET_COMMAND_NEWSEGMENT:
-/* FIXME: check if we get an output segment push and map to an audio- hotplug,
- * otherwise compare against what we requested (clipboard, normal window,
- * ...) */
+/* FIXME: if output segment, register new capture / audio device -
+ * otherwise the only segment that should arrive here clipboard paste */
     break;
     default:
     break;
@@ -242,7 +250,10 @@ static void process_target(struct arcan_shmif_cont* prim,
 
 /* for DISPLAYHINT:
  * RESIZED vs. Window flags RESIZABLE,
- * FOCUS_GAINED, FOCUS_LOST, CLOSED */
+ * FOCUS_GAINED, FOCUS_LOST, CLOSED
+ * if (!ioev[2].iv & 128):
+ *  ioev[2].iv & 2 inactive
+ *  ioev[2].iv & 4 > not focus */
 }
 
 void Arcan_PumpEvents(_THIS)

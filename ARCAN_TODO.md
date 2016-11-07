@@ -1,5 +1,6 @@
 [ ] Video
    [x] Build System Integration
+   [ ] Wait on DISPLAYHINT/OUTPUTHINT
 	 [x] Accelerated Window / Buffer passing
    [x] Non-accelerated Fallback ("Framebuffer")
    [ ] Multiple Windows
