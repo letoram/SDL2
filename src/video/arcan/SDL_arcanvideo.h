@@ -40,16 +40,18 @@ typedef struct {
     SDL_Window *main;
     SDL_mutex* av_sync;
     int refc;
-    size_t n_windows;
-    struct arcan_event *pqueue;
-    size_t pqueue_sz;
     int mx;
+    size_t n_windows;
     struct arcan_shmif_cont clip_in, clip_out, popup, cursor, mcont;
+    uint8_t wndalloc;
+    struct arcan_shmif_cont windows[8];
 } Arcan_SDL_Meta;
 
 typedef struct {
+    int index;
     struct arcan_shmif_cont *con;
-    unsigned tex_id, fbo_id, rbuf_id;
+    struct arcan_event* pqueue;
+    ssize_t pqueue_sz;
 } Arcan_WindowData;
 
 /*

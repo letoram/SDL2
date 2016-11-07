@@ -28,114 +28,36 @@
 #include <stdio.h>
 
 #if SDL_VIDEO_DRIVER_ARCAN && SDL_VIDEO_OPENGL_EGL
-#define TRACE(...)
-//#define TRACE(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
+//#define TRACE(...)
+#define TRACE(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
 
 #include "SDL_arcanopengl.h"
 #include "SDL_arcanvideo.h"
 #include "SDL_opengl.h"
 
-/* There is a similar mechanism in SDL_glfuncs, but the definitions
- * we want are not all there anyhow, and the only other video driver that
- * use this approach is the uikit one, where the GL environment is sane */
-typedef void (*PFNGLGETTEXIMAGEPROC)(GLenum, GLint, GLenum, GLenum, GLvoid*);
-typedef void (*PFNGLBINDTEXTUREPROC)(GLenum, GLuint);
-typedef void (*PFNGLGENTEXTURESPROC)(GLsizei n, GLuint *);
-typedef void (*PFNGLTEXIMAGE2DPROC)(GLenum, GLint, GLint, GLsizei, GLsizei,
-                                    GLint, GLenum, GLenum, const GLvoid *);
-typedef void (*PFNGLTEXPARAMETERIPROC)(GLenum, GLenum, GLint);
-typedef void (*PFNGLFLUSHPROC)();
-
-static PFNGLGENFRAMEBUFFERSPROC glocGenFramebuffers;
-static PFNGLBINDFRAMEBUFFERPROC glocBindFramebuffer;
-static PFNGLCHECKFRAMEBUFFERSTATUSPROC glocCheckFramebufferStatus;
-static PFNGLFRAMEBUFFERTEXTURE2DPROC glocFramebufferTexture2D;
-static PFNGLBINDRENDERBUFFERPROC glocBindRenderbuffer;
-static PFNGLRENDERBUFFERSTORAGEPROC glocRenderbufferStorage;
-static PFNGLFRAMEBUFFERRENDERBUFFERPROC glocFramebufferRenderbuffer;
 /*
- * static PFNGLDELETEFRAMEBUFFERSPROC glocDeleteFramebuffers;
-static PFNGLDELETERENDERBUFFERSPROC glocDeleteRenderbuffers;
+ * only GL functions we need
  */
-static PFNGLGENRENDERBUFFERSPROC glocGenRenderbuffers;
-static PFNGLGETINTEGERI_VPROC glocGetIntegeri_v;
-static PFNGLGETTEXIMAGEPROC glocGetTexImage;
-static PFNGLBINDTEXTUREEXTPROC glocBindTexture;
-static PFNGLGENTEXTURESPROC glocGenTextures;
-static PFNGLTEXIMAGE2DPROC glocTexImage2D;
-static PFNGLTEXPARAMETERIPROC glocTexParameteri;
+typedef void (*PFNGLFLUSHPROC)();
+static PFNGLBINDFRAMEBUFFERPROC glocBindFramebuffer;
 static PFNGLFLUSHPROC glocFlush;
 
-static int arcan_gl_fbo;
+static struct arcan_shmif_cont* current;
 
 /*
- * Synchronization is similar to how iOS treats it, the client MUST
- * render to an offscreen buffer (KHR_Surfaceless_Context) and the
- * texture of the final color buffer is what we pass on to Arcan.
+ * Since we rely on a surfaceless context, we NEED the caller to
+ * render into an FBO where we control the color attachment. Havn't
+ * found a good place in SDL to enforce this, hence why we override
+ * the BindFramebuffer call.
  */
 void
 Arcan_GL_SwapWindow(_THIS, SDL_Window* window)
 {
     Arcan_WindowData* wnd = window->driverdata;
-    uintptr_t display;
-    GLint id;
 
     glocFlush();
 
-/* this window has no working GL setup */
-    if (!arcan_shmifext_egl_meta(wnd->con, &display, NULL, NULL))
-        return;
-
-    if (arcan_shmifext_eglsignal(wnd->con, display,
-        SHMIF_SIGVID, wnd->tex_id) >= 0)
-       return;
-
-/* we can't pass textures accelerated, have to do it the slow way */
-    glocGetIntegeri_v(GL_TEXTURE_BINDING_2D, 1, &id);
-    glocBindTexture(GL_TEXTURE_2D, wnd->tex_id);
-	glocGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA,
-                  GL_UNSIGNED_BYTE, (void*) wnd->con->vidp);
-	glocBindTexture(GL_TEXTURE_2D, id);
-
-    arcan_shmif_signal(wnd->con, SHMIF_SIGVID);
-}
-
-void
-Arcan_GL_SetupFBO(_THIS, Arcan_WindowData* window, enum arcan_fboop op)
-{
-/* FIXME: if the values are already there, drop the current fbo */
-    GLenum status;
-    if (op == ARCAN_FBOOP_DESTROY){
-        window->tex_id = GL_NONE;
-        window->fbo_id = GL_NONE;
-        window->rbuf_id = GL_NONE;
-        return;
-    }
-
-/* stup empty texture backing store */
-	glocGenTextures(1, &window->tex_id);
-    glocBindTexture(GL_TEXTURE_2D, window->tex_id);
-    glocTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, window->con->w, window->con->h,
-                 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    glocTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glocTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glocBindTexture(GL_TEXTURE_2D, 0);
-
-/* bind it to a new FBO */
-	glocGenFramebuffers(1, &window->fbo_id);
-    glocBindFramebuffer(GL_FRAMEBUFFER, window->fbo_id);
-    glocFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-        GL_TEXTURE_2D, window->tex_id, 0);
-    glocGenRenderbuffers(1, &window->rbuf_id);
-    glocBindRenderbuffer(GL_RENDERBUFFER, window->rbuf_id);
-    glocRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8,
-        window->con->w, window->con->h);
-    glocFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
-        GL_RENDERBUFFER, window->rbuf_id);
-
-    status = glocCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (status != GL_FRAMEBUFFER_COMPLETE)
-        SDL_SetError("Incomplete Framebuffer Attachment (Arcan)");
+    arcan_shmifext_signal(wnd->con, 0, SHMIF_SIGVID, SHMIFEXT_BUILTIN);
 }
 
 /* shmifext links to the related EGL/GL library already */
@@ -143,34 +65,19 @@ int
 Arcan_EGL_LoadLibrary(_THIS, const char *path)
 {
     Arcan_WindowData *wnd = _this->driverdata;
-    void* display;
 
-    if (!arcan_shmifext_headless_egl(arcan_shmif_primary(SHMIF_INPUT),
-        &display, (void*) arcan_shmifext_headless_lookup, NULL))
+/*    if (!arcan_shmifext_egl(arcan_shmif_primary(SHMIF_INPUT),
+        &display, (void*) arcan_shmifext_lookup, NULL))
         return -1;
-
+*/
     _this->gl_config.driver_loaded = 1;
 
     if (SDL_GL_LoadLibrary(NULL) < 0){
         return -1;
     }
 
-#define LOOKUP(X) arcan_shmifext_headless_lookup(wnd->con, X);
-    glocGenFramebuffers = LOOKUP("glGenFramebuffers");
-    glocBindFramebuffer = LOOKUP("glBindFramebuffer");
-    glocFramebufferTexture2D = LOOKUP("glFramebufferTexture2D");
-	glocCheckFramebufferStatus = LOOKUP("glCheckFramebufferStatus");
-    glocBindRenderbuffer = LOOKUP("glBindRenderbuffer");
-    glocRenderbufferStorage = LOOKUP("glRenderbufferStorage");
-    glocFramebufferRenderbuffer = LOOKUP("glFramebufferRenderbuffer");
-    glocGenRenderbuffers = LOOKUP("glGenRenderbuffers");
-    glocGetIntegeri_v = LOOKUP("glGetIntegeri_v");
-    glocGetTexImage = LOOKUP("glGetTexImage");
-    glocBindTexture = LOOKUP("glBindTexture");
-    glocGenTextures = LOOKUP("glGenTextures");
-    glocTexImage2D = LOOKUP("glTexImage2D");
-    glocTexParameteri = LOOKUP("glTexParameteri");
-    glocFlush = LOOKUP("glFlush");
+#define LOOKUP(X) arcan_shmifext_lookup(wnd->con, X);
+   glocFlush = LOOKUP("glFlush");
 #undef LOOKUP
 
     return 0;
@@ -192,9 +99,12 @@ Arcan_EGL_UnloadLibrary(_THIS)
 static void redirectFBO(GLint tgt, GLint fbo)
 {
     if (0 == fbo){
-        fbo = arcan_gl_fbo;
+        uintptr_t fbov = 0;
+        arcan_shmifext_gl_handles(current, &fbov, NULL, NULL);
+        fbo = fbov;
     }
 
+    TRACE("bind framebuffer: %d", fbo);
     glocBindFramebuffer(tgt, fbo);
 }
 
@@ -212,7 +122,7 @@ Arcan_EGL_GetProcAddress(_THIS, const char *proc)
         strcmp(proc, "glBindFramebufferEXT") == 0)
         return redirectFBO;
 
-    ret = arcan_shmifext_headless_lookup(wnd->con, proc);
+    ret = arcan_shmifext_lookup(wnd->con, proc);
     if (!ret){
         TRACE("arcan lookup fail on (%s)", proc);
     }
@@ -224,49 +134,38 @@ SDL_GLContext
 Arcan_EGL_CreateContext(_THIS, SDL_Window* window)
 {
     Arcan_WindowData* wnd = window->driverdata;
-    uintptr_t context;
-    TRACE("Create Context");
+    struct arcan_shmifext_setup defs = arcan_shmifext_defaults(wnd->con);
+    defs.red = _this->gl_config.red_size;
+    defs.green = _this->gl_config.green_size;
+    defs.blue = _this->gl_config.blue_size;
+    defs.stencil = _this->gl_config.stencil_size;
+    defs.depth = _this->gl_config.depth_size;
+    defs.major = _this->gl_config.major_version;
+    defs.minor = _this->gl_config.minor_version;
+    defs.api = _this->gl_config.profile_mask == SDL_GL_CONTEXT_PROFILE_ES ?
+        API_GLES : API_OPENGL;
+    arcan_shmifext_setup(wnd->con, defs);
+    arcan_shmifext_make_current(wnd->con);
 
-    if (!arcan_shmifext_egl_meta(wnd->con, NULL, NULL, &context)){
-        TRACE("no context for window, create one");
-        return NULL;
-    }
-
-    return (SDL_GLContext) context;
+    return (SDL_GLContext) wnd;
 }
 
 void
 Arcan_EGL_DeleteContext(_THIS, SDL_GLContext context)
 {
-/*
- * here we probably need to check driver-data and see if the context
- * match, if it does, don't drop it as it's our primary connection
- */
+    Arcan_WindowData* wnd = (Arcan_WindowData*) context;
     TRACE("Delete Context\n");
+    arcan_shmifext_drop_context(wnd->con);
 }
 
 int
 Arcan_EGL_MakeCurrent(_THIS, SDL_Window* window, SDL_GLContext context)
 {
-    Arcan_WindowData *wnd = _this->driverdata;
-    uintptr_t display, surface;
-    TRACE("Make Current\n");
+    Arcan_WindowData *wnd = (Arcan_WindowData*) context;
+    if (!wnd)
+        return SDL_SetError("bad context");
 
-    if (window)
-        wnd = window->driverdata;
-
-/* this window has no working GL setup */
-    if (!arcan_shmifext_egl_meta(wnd->con, &display, &surface, NULL))
-        return -1;
-
-    glocBindFramebuffer(GL_FRAMEBUFFER, wnd->fbo_id);
-    arcan_gl_fbo = wnd->fbo_id;
-
-/*
-    eglMakeCurrent((EGLDisplay) display, (EGLSurface) surface,
-                   (EGLSurface) surface, context);
- */
-
+    arcan_shmifext_make_current(wnd->con);
     return 0;
 }
 #endif /* SDL_VIDEO_DRIVER_Arcan */
