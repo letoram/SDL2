@@ -94,7 +94,6 @@ Arcan_GetDisplayBounds(_THIS, SDL_VideoDisplay * display, SDL_Rect * rect)
     if (initial && initial->display_width_px && initial->display_height_px){
         rect->w = initial->display_width_px;
         rect->h = initial->display_height_px;
-        printf("send bounds: %d, %d\n", rect->w, rect->h);
     }
     else {
         rect->w = arcan_data->mcont.w <= 32 ? 640 : arcan_data->mcont.w;

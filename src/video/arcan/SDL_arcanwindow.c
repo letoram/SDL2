@@ -117,7 +117,6 @@ Arcan_DestroyWindow(_THIS, SDL_Window* window)
     TRACE("DestroyWindow");
 
     if (data && data->pqueue){
-        printf("drop pqueue\n");
        for (int i = 0; i < data->pqueue_sz && data->pqueue_sz > 0; i++){
             if (arcan_shmif_descrevent(&data->pqueue[i]) &&
                 data->pqueue[i].tgt.ioevs[0].iv != -1){

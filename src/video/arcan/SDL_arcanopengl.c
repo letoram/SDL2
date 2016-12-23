@@ -28,8 +28,8 @@
 #include <stdio.h>
 
 #if SDL_VIDEO_DRIVER_ARCAN && SDL_VIDEO_OPENGL_EGL
-#define TRACE(...)
-//#define TRACE(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
+//#define TRACE(...)
+#define TRACE(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
 
 #include "SDL_arcanopengl.h"
 #include "SDL_arcanvideo.h"
@@ -102,7 +102,6 @@ Arcan_EGL_UnloadLibrary(_THIS)
  */
 static void redirectFBO(GLint tgt, GLint fbo)
 {
-    printf("bind framebuffer: %d\n", fbo);
     if (0 == fbo){
         arcan_shmifext_make_current(current);
         return;
@@ -146,12 +145,12 @@ Arcan_EGL_CreateContext(_THIS, SDL_Window* window)
     defs.depth = _this->gl_config.depth_size;
     defs.major = _this->gl_config.major_version;
     defs.minor = _this->gl_config.minor_version;
-    defs.builtin_fbo = 2;
     defs.api = _this->gl_config.profile_mask == SDL_GL_CONTEXT_PROFILE_ES ?
         API_GLES : API_OPENGL;
     arcan_shmifext_setup(wnd->con, defs);
     arcan_shmifext_make_current(wnd->con);
     glocBindFramebuffer = arcan_shmifext_lookup(wnd->con, "glBindFramebuffer");
+
     return (SDL_GLContext) wnd;
 }
 
@@ -161,6 +160,9 @@ Arcan_EGL_DeleteContext(_THIS, SDL_GLContext context)
     Arcan_WindowData* wnd = (Arcan_WindowData*) context;
     TRACE("Delete Context\n");
     arcan_shmifext_drop_context(wnd->con);
+//    Arcan_WindowData* wnd = (Arcan_WindowData*) context;
+    TRACE("Delete Context\n");
+//    arcan_shmifext_drop(wnd->con);
 }
 
 int
