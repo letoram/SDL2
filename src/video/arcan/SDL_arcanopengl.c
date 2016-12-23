@@ -146,7 +146,7 @@ Arcan_EGL_CreateContext(_THIS, SDL_Window* window)
         API_GLES : API_OPENGL;
     arcan_shmifext_setup(wnd->con, defs);
     arcan_shmifext_make_current(wnd->con);
-
+    glocBindFramebuffer = arcan_shmifext_lookup(wnd->con, "glBindFramebuffer");
     return (SDL_GLContext) wnd;
 }
 
