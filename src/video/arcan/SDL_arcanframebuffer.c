@@ -33,7 +33,6 @@ Arcan_CreateWindowFramebuffer(_THIS, SDL_Window* sdl_window, Uint32* format,
                             void** pixels, int* pitch)
 {
 	Arcan_WindowData* data = (Arcan_WindowData*) sdl_window->driverdata;
-	printf("CreateWindowFramebuffer\n");
 	*format = SDL_PIXELFORMAT_ABGR8888;
 	*pixels = data->con->vidp;
 	*pitch = data->con->stride;
@@ -52,7 +51,6 @@ Arcan_UpdateWindowFramebuffer(_THIS, SDL_Window* sdl_window,
 void
 Arcan_DestroyWindowFramebuffer(_THIS, SDL_Window* sdl_window)
 {
-	printf("DestroyWindowFramebuffer\n");
 }
 
 #endif

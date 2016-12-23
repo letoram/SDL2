@@ -40,7 +40,8 @@ typedef struct {
     SDL_Window *main;
     SDL_mutex* av_sync;
     int refc;
-    int mx;
+    int mx, my, mrel;
+    bool dirty_mouse;
     size_t n_windows;
     struct arcan_shmif_cont clip_in, clip_out, popup, cursor, mcont;
     uint8_t wndalloc;

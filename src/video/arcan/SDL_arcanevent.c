@@ -44,11 +44,6 @@ static inline void process_mouse(struct arcan_shmif_cont *prim,
                                  Arcan_SDL_Meta *meta,
                                  arcan_ioevent ev)
 {
-    SDL_Mouse* mouse = SDL_GetMouse();
-    if (!mouse){
-        return;
-    }
-
 /* many packing options here, as we have the full set of:
  * x/y split into two events, relative dominant, relative desired
  * x/y split into two events, non-relative dominant, relative desired
@@ -58,27 +53,50 @@ static inline void process_mouse(struct arcan_shmif_cont *prim,
  * x/y merged, non-relative dominant, non-relative desired
  */
     if (ev.datatype == EVENT_IDATATYPE_ANALOG){
-        int base = mouse->relative_mode ?
-            (ev.input.analog.gotrel ? 0 : 1):
-            (ev.input.analog.gotrel ? 1 : 0);
-
-/* x/y merged */
-        if (ev.subid == 2){
-            SDL_SendMouseMotion(wnd, ev.devid, mouse->relative_mode,
-            ev.input.analog.axisval[base], ev.input.analog.axisval[base+2]);
+/* x/y merged, both absolute and tracked relative */
+        if (!meta->dirty_mouse){
+            meta->mx = 0;
+            meta->my = 0;
         }
-        else{
-/* we'll get in pairs, wait and aggregate */
-            if (ev.subid == 0){
-                meta->mx = ev.input.analog.axisval[base];
+        meta->dirty_mouse = true;
+        meta->mrel = ev.input.analog.gotrel;
+
+        if (ev.subid == 2){
+            if (meta->mrel){
+                meta->mx += ev.input.analog.axisval[0];
+                meta->my += ev.input.analog.axisval[2];
             }
-            else if (ev.subid == 1){
-                SDL_SendMouseMotion(wnd, ev.devid, mouse->relative_mode,
-                                    meta->mx, ev.input.analog.axisval[base]);
+            else {
+                meta->mx = ev.input.analog.axisval[0];
+                meta->my = ev.input.analog.axisval[2];
+            }
+        }
+/* inefficient fallbacks */
+        else{
+            if (ev.input.analog.gotrel){
+                if (ev.subid == 0){
+                    meta->mx += ev.input.analog.axisval[0];
+                }
+                else if (ev.subid == 1){
+                    meta->my += ev.input.analog.axisval[0];
+                }
+            }
+            else {
+                if (ev.subid == 0){
+                    meta->mx = ev.input.analog.axisval[0];
+                }
+                else if (ev.subid == 1){
+                    meta->my = ev.input.analog.axisval[0];
+                }
             }
         }
     }
     else if (ev.datatype == EVENT_IDATATYPE_DIGITAL){
+        if (meta->dirty_mouse){
+            SDL_SendMouseMotion(wnd, 0, meta->mrel, meta->mx, meta->my);
+            meta->dirty_mouse = false;
+        }
+
         switch(ev.subid){
         case MBTN_LEFT_IND:
             SDL_SendMouseButton(wnd, ev.devid,
@@ -270,7 +288,7 @@ void Arcan_PumpEvents(_THIS)
 
     meta = (Arcan_SDL_Meta*) con->user;
 
-    /* we maintain multiple con to handle events for all possible subsegs */
+/* we maintain multiple con to handle events for all possible subsegs */
     SDL_LockMutex(meta->av_sync);
     while (con){
         SDL_Window *wnd = meta->main;
@@ -282,8 +300,12 @@ void Arcan_PumpEvents(_THIS)
                 process_target(prim, con, wnd, meta, ev.tgt);
             }
 
-            if (SDL_TICKS_PASSED(SDL_GetTicks(), start_ticks))
+/* at most, spend 8ms flushing input events
+            if (SDL_TICKS_PASSED(SDL_GetTicks(), start_ticks + 8)){
+                printf("ticks passed (%d, %d)\n", start_ticks, SDL_GetTicks());
                 break;
+            }
+ */
         }
 
 /*
@@ -292,6 +314,11 @@ void Arcan_PumpEvents(_THIS)
  */
         con = NULL;
     }
+    if (meta->dirty_mouse){
+        SDL_SendMouseMotion(meta->main, 0, meta->mrel, meta->mx, meta->my);
+        meta->dirty_mouse = false;
+    }
+
     SDL_UnlockMutex(meta->av_sync);
 }
 

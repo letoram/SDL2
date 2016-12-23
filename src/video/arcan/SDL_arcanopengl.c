@@ -28,8 +28,8 @@
 #include <stdio.h>
 
 #if SDL_VIDEO_DRIVER_ARCAN && SDL_VIDEO_OPENGL_EGL
-//#define TRACE(...)
-#define TRACE(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
+#define TRACE(...)
+//#define TRACE(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
 
 #include "SDL_arcanopengl.h"
 #include "SDL_arcanvideo.h"
@@ -49,6 +49,10 @@ static struct arcan_shmif_cont* current;
  * render into an FBO where we control the color attachment. Havn't
  * found a good place in SDL to enforce this, hence why we override
  * the BindFramebuffer call.
+ *
+ * Judging by the ios backend, which has similar behavior, the other
+ * option is to have one FBO and swap out the color attachments. Both
+ * strategies should probably be added to shmif (builtin_fbo modes)
  */
 void
 Arcan_GL_SwapWindow(_THIS, SDL_Window* window)
@@ -98,10 +102,10 @@ Arcan_EGL_UnloadLibrary(_THIS)
  */
 static void redirectFBO(GLint tgt, GLint fbo)
 {
+    printf("bind framebuffer: %d\n", fbo);
     if (0 == fbo){
-        uintptr_t fbov = 0;
-        arcan_shmifext_gl_handles(current, &fbov, NULL, NULL);
-        fbo = fbov;
+        arcan_shmifext_make_current(current);
+        return;
     }
 
     TRACE("bind framebuffer: %d", fbo);
@@ -142,6 +146,7 @@ Arcan_EGL_CreateContext(_THIS, SDL_Window* window)
     defs.depth = _this->gl_config.depth_size;
     defs.major = _this->gl_config.major_version;
     defs.minor = _this->gl_config.minor_version;
+    defs.builtin_fbo = 2;
     defs.api = _this->gl_config.profile_mask == SDL_GL_CONTEXT_PROFILE_ES ?
         API_GLES : API_OPENGL;
     arcan_shmifext_setup(wnd->con, defs);

@@ -93,6 +93,7 @@ Arcan_CreateWindow(_THIS, SDL_Window* window)
     window->driverdata = data;
     window->x = 0;
     window->y = 0;
+    window->flags &= ~SDL_WINDOW_FULLSCREEN;
 
     if (window->flags & SDL_WINDOW_OPENGL){
         data->con->hints = SHMIF_RHINT_ORIGO_LL;
