@@ -283,21 +283,18 @@ void Arcan_PumpEvents(_THIS)
     Arcan_SDL_Meta *meta = con->user;
 
 /* don't process events until we are fully initialized with a working wnd */
-    if (!con || !con->user)
+    if (!con || !con->user || !meta->main)
         return;
-
-    meta = (Arcan_SDL_Meta*) con->user;
 
 /* we maintain multiple con to handle events for all possible subsegs */
     SDL_LockMutex(meta->av_sync);
-    while (con){
-        SDL_Window *wnd = meta->main;
+    while (con && meta->main){
         while (arcan_shmif_poll(con, &ev) > 0){
             if (ev.category == EVENT_IO){
-                process_input(prim, con, wnd, meta, ev.io);
+                process_input(prim, con, meta->main, meta, ev.io);
             }
             else if (ev.category == EVENT_TARGET){
-                process_target(prim, con, wnd, meta, ev.tgt);
+                process_target(prim, con, meta->main, meta, ev.tgt);
             }
 
 /* at most, spend 8ms flushing input events
@@ -314,7 +311,7 @@ void Arcan_PumpEvents(_THIS)
  */
         con = NULL;
     }
-    if (meta->dirty_mouse){
+    if (meta->dirty_mouse && meta->main){
         SDL_SendMouseMotion(meta->main, 0, meta->mrel, meta->mx, meta->my);
         meta->dirty_mouse = false;
     }

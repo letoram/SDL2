@@ -141,15 +141,12 @@ Arcan_PlayDevice(_THIS)
         size_t ntc = (cont->mcont.abufsize - cont->mcont.abufused) < left_in ?
                      (cont->mcont.abufsize - cont->mcont.abufused) : left_in;
 
-        printf("audio ntc: %zu, size: %zu\n", ntc, cont->mcont.abufsize);
         memcpy(&((uint8_t*)cont->mcont.audp)[cont->mcont.abufused], cur, ntc);
         cont->mcont.abufused += ntc;
         left_in -= ntc;
         cur += ntc;
         if (cont->mcont.abufused == cont->mcont.abufsize){
-            printf("signal transfer\n");
             arcan_shmif_signal(&cont->mcont, SHMIF_SIGAUD);
-            printf("done signalling\n");
         }
     }
     SDL_UnlockMutex(cont->av_sync);
