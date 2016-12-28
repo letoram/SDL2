@@ -29,7 +29,7 @@
 
 #if SDL_VIDEO_DRIVER_ARCAN && SDL_VIDEO_OPENGL_EGL
 //#define TRACE(...)
-#define TRACE(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
+//#define TRACE(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
 
 #include "SDL_arcanopengl.h"
 #include "SDL_arcanvideo.h"
@@ -142,6 +142,7 @@ Arcan_EGL_CreateContext(_THIS, SDL_Window* window)
     defs.green = _this->gl_config.green_size;
     defs.blue = _this->gl_config.blue_size;
     defs.stencil = _this->gl_config.stencil_size;
+    defs.builtin_fbo = 3;
     defs.depth = _this->gl_config.depth_size;
     defs.major = _this->gl_config.major_version;
     defs.minor = _this->gl_config.minor_version;
