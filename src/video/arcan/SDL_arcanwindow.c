@@ -150,9 +150,12 @@ Arcan_SetWindowFullscreen(_THIS, SDL_Window* window,
                           SDL_bool fullscreen)
 {
 /*
- * Not our decision, we can try a viewport hint
+ * Not our decision, we can try a viewport hint.
+ * Some games actually track this though, and repeatedly
+ * check displayBounds to see if we match.
  */
     TRACE("SetWindowFullscreen(%d)", fullscreen);
+
 }
 
 void

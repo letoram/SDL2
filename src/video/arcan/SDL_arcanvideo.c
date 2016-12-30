@@ -22,8 +22,8 @@
 #include "../../SDL_internal.h"
 
 #if SDL_VIDEO_DRIVER_ARCAN
-//#define TRACE(...)
-#define TRACE(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
+#define TRACE(...)
+//#define TRACE(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
 
 #include "SDL_arcanwindow.h"
 #include "SDL_video.h"
@@ -33,6 +33,7 @@
 #include "SDL_arcanopengl.h"
 #include "SDL_arcanvideo.h"
 #include "SDL_arcanevent.h"
+#include "SDL_arcanmouse.h"
 
 // #include "SDL_arcandyn.h"
 
@@ -108,6 +109,8 @@ Arcan_GetDisplayDPI(_THIS, SDL_VideoDisplay * display, float * ddpi, float * hdp
     Arcan_SDL_Meta *arcan_data = _this->driverdata;
     struct arcan_shmif_initial* initial;
     arcan_shmif_initial(&arcan_data->mcont, &initial);
+
+    TRACE("GetDisplayDPI");
     if (initial && initial->density > 0){
         float nd = initial->density * 2.54;
         if (*ddpi){
@@ -158,6 +161,8 @@ Arcan_VideoInit(_THIS)
     mode.w = arcan_data->mcont.w;
     mode.h = arcan_data->mcont.h;
     SDL_AddDisplayMode(&display, &mode);
+
+    Arcan_InitMouse();
     return 1;
 }
 

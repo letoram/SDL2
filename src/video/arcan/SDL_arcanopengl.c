@@ -28,7 +28,7 @@
 #include <stdio.h>
 
 #if SDL_VIDEO_DRIVER_ARCAN && SDL_VIDEO_OPENGL_EGL
-//#define TRACE(...)
+#define TRACE(...)
 //#define TRACE(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
 
 #include "SDL_arcanopengl.h"
@@ -58,6 +58,7 @@ void
 Arcan_GL_SwapWindow(_THIS, SDL_Window* window)
 {
     Arcan_WindowData* wnd = window->driverdata;
+    TRACE("SwapWindow");
 
     glocFlush();
 
@@ -102,12 +103,12 @@ Arcan_EGL_UnloadLibrary(_THIS)
  */
 static void redirectFBO(GLint tgt, GLint fbo)
 {
+    TRACE("bind framebuffer: %d", fbo);
     if (0 == fbo){
         arcan_shmifext_make_current(current);
         return;
     }
 
-    TRACE("bind framebuffer: %d", fbo);
     glocBindFramebuffer(tgt, fbo);
 }
 
