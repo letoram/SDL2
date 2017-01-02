@@ -34,9 +34,10 @@
 #include "SDL_arcanvideo.h"
 #include "SDL_arcanwindow.h"
 #include "SDL_arcanopengl.h"
+#include "SDL_arcanevent.h"
 
-//#define TRACE(...)
-#define TRACE(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
+#define TRACE(...)
+//#define TRACE(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
 
 int
 Arcan_CreateWindow(_THIS, SDL_Window* window)
@@ -48,7 +49,6 @@ Arcan_CreateWindow(_THIS, SDL_Window* window)
         return SDL_SetError("Out of Memory");
 
     if (meta->main){
-        Arcan_WindowData *pdata = meta->main->driverdata;
         int index = 0;
         struct arcan_event acqev = {
             .category = EVENT_EXTERNAL,
@@ -68,22 +68,29 @@ Arcan_CreateWindow(_THIS, SDL_Window* window)
         arcan_shmif_enqueue(&meta->mcont, &acqev);
 /* FIXME: we must properly flush the pqueue in the event handler */
         if (arcan_shmif_acquireloop(&meta->mcont,
-                                    &acqev, &pdata->pqueue, &pdata->pqueue_sz)){
+                                    &acqev, &meta->pqueue, &meta->pqueue_sz)){
             data->con = &meta->windows[index];
             *(data->con) = arcan_shmif_acquire(&meta->mcont,NULL,SEGID_GAME, 0);
             meta->wndalloc |= 1 << index;
+            if (SDL_GetRelativeMouseMode()){
+                arcan_shmif_enqueue(data->con, &(struct arcan_event){
+                    .ext.kind = ARCAN_EVENT(CURSORHINT),
+                    .ext.message.data = "hidden-rel"
+                });
+            }
         }
         else {
-            if (!data->pqueue){
+            if (!meta->pqueue){
                 SDL_free(data);
                 return SDL_SetError("Out of Memory");
             }
-            if (data->pqueue_sz < 0){ /* game over */
+            if (meta->pqueue_sz < 0){ /* game over */
                 SDL_free(data);
                 return SDL_SetError("Shmif- state inconsistent\n");
             }
             return SDL_SetError("Arcan rejected window request\n");
         }
+        Arcan_PumpEvents(_this);
     }
     else {
         meta->main = window;
@@ -98,6 +105,7 @@ Arcan_CreateWindow(_THIS, SDL_Window* window)
     if (window->flags & SDL_WINDOW_OPENGL){
         data->con->hints = SHMIF_RHINT_ORIGO_LL;
         arcan_shmif_resize(data->con, window->w, window->h);
+        arcan_shmifext_bind(data->con);
     }
     else{
         data->con->hints = 0;
@@ -105,6 +113,8 @@ Arcan_CreateWindow(_THIS, SDL_Window* window)
     }
     window->w = data->con->w;
     window->h = data->con->h;
+    data->disp_w = meta->disp_w;
+    data->disp_h = meta->disp_h;
 
     return 0;
 }
@@ -115,18 +125,6 @@ Arcan_DestroyWindow(_THIS, SDL_Window* window)
     Arcan_SDL_Meta *meta = _this->driverdata;
     Arcan_WindowData *data = window->driverdata;
     TRACE("DestroyWindow");
-
-    if (data && data->pqueue){
-       for (int i = 0; i < data->pqueue_sz && data->pqueue_sz > 0; i++){
-            if (arcan_shmif_descrevent(&data->pqueue[i]) &&
-                data->pqueue[i].tgt.ioevs[0].iv != -1){
-                    close(data->pqueue[i].tgt.ioevs[0].iv);
-            }
-       }
-       SDL_free(data->pqueue);
-       data->pqueue = NULL;
-       data->pqueue_sz = 0;
-    }
 
     if (meta->main == window){
         meta->main = NULL;
@@ -154,8 +152,9 @@ Arcan_SetWindowFullscreen(_THIS, SDL_Window* window,
  * Some games actually track this though, and repeatedly
  * check displayBounds to see if we match.
  */
+    Arcan_WindowData *data = window->driverdata;
     TRACE("SetWindowFullscreen(%d)", fullscreen);
-
+    arcan_shmif_resize(data->con, data->disp_w, data->disp_h);
 }
 
 void

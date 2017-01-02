@@ -92,14 +92,9 @@ Arcan_GetDisplayBounds(_THIS, SDL_VideoDisplay * display, SDL_Rect * rect)
 
     rect->x = 0;
     rect->y = 0;
-    if (initial && initial->display_width_px && initial->display_height_px){
-        rect->w = initial->display_width_px;
-        rect->h = initial->display_height_px;
-    }
-    else {
-        rect->w = arcan_data->mcont.w <= 32 ? 640 : arcan_data->mcont.w;
-        rect->h = arcan_data->mcont.h <= 32 ? 480 : arcan_data->mcont.h;
-    }
+    rect->w = arcan_data->disp_w;
+    rect->h = arcan_data->disp_h;
+
     return 0;
 }
 
@@ -151,9 +146,15 @@ Arcan_VideoInit(_THIS)
         mode.h = arcan_data->mcont.h;
     }
 
+/* FIXME:
+ *  this is not technically correct, should be probed against the static
+ *  build format (sizeof + checking packing macro for mask should help)
+ */
     mode.format = SDL_PIXELFORMAT_ABGR8888;
     mode.driverdata = NULL;
-
+    arcan_data->format = SDL_PIXELFORMAT_ABGR8888;
+    arcan_data->disp_w = mode.w;
+    arcan_data->disp_h = mode.h;
     display.desktop_mode = mode;
     display.current_mode = mode;
     SDL_AddVideoDisplay(&display);
@@ -243,6 +244,12 @@ int arcan_av_setup_primary()
         arcan_data->mcont = *cont;
         arcan_shmif_setprimary(SHMIF_INPUT, &arcan_data->mcont);
         arcan_data->mcont.user = arcan_data;
+        if (SDL_GetRelativeMouseMode()){
+            arcan_shmif_enqueue(cont, &(struct arcan_event){
+                .ext.kind = ARCAN_EVENT(CURSORHINT),
+                .ext.message.data = "hidden-rel"
+            });
+        }
     }
 
     return 0;

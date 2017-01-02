@@ -29,7 +29,7 @@
 
 #if SDL_VIDEO_DRIVER_ARCAN && SDL_VIDEO_OPENGL_EGL
 #define TRACE(...)
-//#define TRACE(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
+//#define TRACE(...) {fprintf(stdout, __VA_ARGS__); fprintf(stdout, "\n");}
 
 #include "SDL_arcanopengl.h"
 #include "SDL_arcanvideo.h"
@@ -40,6 +40,7 @@
  */
 typedef void (*PFNGLFLUSHPROC)();
 static PFNGLBINDFRAMEBUFFERPROC glocBindFramebuffer;
+void (*glocGetIntegerv)(GLenum, GLint*);
 static PFNGLFLUSHPROC glocFlush;
 
 static struct arcan_shmif_cont* current;
@@ -58,18 +59,17 @@ void
 Arcan_GL_SwapWindow(_THIS, SDL_Window* window)
 {
     Arcan_WindowData* wnd = window->driverdata;
-    TRACE("SwapWindow");
 
     glocFlush();
-
     arcan_shmifext_signal(wnd->con, 0, SHMIF_SIGVID, SHMIFEXT_BUILTIN);
+    arcan_shmifext_bind(wnd->con);
+    current = wnd->con;
 }
 
 /* shmifext links to the related EGL/GL library already */
 int
 Arcan_EGL_LoadLibrary(_THIS, const char *path)
 {
-    Arcan_WindowData *wnd = _this->driverdata;
 
 /*    if (!arcan_shmifext_egl(arcan_shmif_primary(SHMIF_INPUT),
         &display, (void*) arcan_shmifext_lookup, NULL))
@@ -80,10 +80,6 @@ Arcan_EGL_LoadLibrary(_THIS, const char *path)
     if (SDL_GL_LoadLibrary(NULL) < 0){
         return -1;
     }
-
-#define LOOKUP(X) arcan_shmifext_lookup(wnd->con, X);
-   glocFlush = LOOKUP("glFlush");
-#undef LOOKUP
 
     return 0;
 }
@@ -103,12 +99,11 @@ Arcan_EGL_UnloadLibrary(_THIS)
  */
 static void redirectFBO(GLint tgt, GLint fbo)
 {
-    TRACE("bind framebuffer: %d", fbo);
+    TRACE("bind framebuffer: (%d:%d)", tgt, fbo);
     if (0 == fbo){
-        arcan_shmifext_make_current(current);
+        arcan_shmifext_bind(current);
         return;
     }
-
     glocBindFramebuffer(tgt, fbo);
 }
 
@@ -149,9 +144,16 @@ Arcan_EGL_CreateContext(_THIS, SDL_Window* window)
     defs.minor = _this->gl_config.minor_version;
     defs.api = _this->gl_config.profile_mask == SDL_GL_CONTEXT_PROFILE_ES ?
         API_GLES : API_OPENGL;
+    TRACE("requested: %d, %d\n", _this->gl_config.major_version, _this->gl_config.minor_version);
     arcan_shmifext_setup(wnd->con, defs);
     arcan_shmifext_make_current(wnd->con);
-    glocBindFramebuffer = arcan_shmifext_lookup(wnd->con, "glBindFramebuffer");
+    arcan_shmifext_bind(wnd->con);
+
+#define LOOKUP(X) arcan_shmifext_lookup(wnd->con, X);
+    glocBindFramebuffer = LOOKUP("glBindFramebuffer");
+    glocFlush = LOOKUP("glFlush");
+    glocGetIntegerv = LOOKUP("glocGetIntegerv");
+#undef LOOKUP
 
     return (SDL_GLContext) wnd;
 }
@@ -175,6 +177,7 @@ Arcan_EGL_MakeCurrent(_THIS, SDL_Window* window, SDL_GLContext context)
         return SDL_SetError("bad context");
 
     arcan_shmifext_make_current(wnd->con);
+    current = wnd->con;
     return 0;
 }
 #endif /* SDL_VIDEO_DRIVER_Arcan */

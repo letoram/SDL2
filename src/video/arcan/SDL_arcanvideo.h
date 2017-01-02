@@ -39,20 +39,24 @@
 typedef struct {
     SDL_Window *main;
     SDL_mutex* av_sync;
+    Uint32 format;
     int refc;
     int mx, my, mrel;
     bool dirty_mouse;
+    bool cursor_reject;
     size_t n_windows;
-    struct arcan_shmif_cont clip_in, clip_out, popup, cursor, mcont;
+    struct arcan_shmif_cont clip_in, clip_out, cursor, mcont;
     uint8_t wndalloc;
+    int disp_w, disp_h;
+    struct arcan_event* pqueue;
+    ssize_t pqueue_sz;
     struct arcan_shmif_cont windows[8];
 } Arcan_SDL_Meta;
 
 typedef struct {
     int index;
     struct arcan_shmif_cont *con;
-    struct arcan_event* pqueue;
-    ssize_t pqueue_sz;
+    int disp_w, disp_h;
 } Arcan_WindowData;
 
 /*
