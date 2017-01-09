@@ -51,9 +51,9 @@ static struct arcan_shmif_cont* current;
  * found a good place in SDL to enforce this, hence why we override
  * the BindFramebuffer call.
  *
- * Judging by the ios backend, which has similar behavior, the other
- * option is to have one FBO and swap out the color attachments. Both
- * strategies should probably be added to shmif (builtin_fbo modes)
+ * Though somewhat slower than swapping FBOs around, some games cache
+ * the FBO bound before they get control, so we will have to settle for
+ * swapping color attachment (shmif builtin_fbo can do both)
  */
 void
 Arcan_GL_SwapWindow(_THIS, SDL_Window* window)
@@ -70,11 +70,6 @@ Arcan_GL_SwapWindow(_THIS, SDL_Window* window)
 int
 Arcan_EGL_LoadLibrary(_THIS, const char *path)
 {
-
-/*    if (!arcan_shmifext_egl(arcan_shmif_primary(SHMIF_INPUT),
-        &display, (void*) arcan_shmifext_lookup, NULL))
-        return -1;
-*/
     _this->gl_config.driver_loaded = 1;
 
     if (SDL_GL_LoadLibrary(NULL) < 0){
@@ -129,8 +124,7 @@ Arcan_EGL_GetProcAddress(_THIS, const char *proc)
     return ret;
 }
 
-SDL_GLContext
-Arcan_EGL_CreateContext(_THIS, SDL_Window* window)
+struct arcan_shmifext_setup Arcan_GL_cfg(_THIS, SDL_Window* window)
 {
     Arcan_WindowData* wnd = window->driverdata;
     struct arcan_shmifext_setup defs = arcan_shmifext_defaults(wnd->con);
@@ -144,10 +138,24 @@ Arcan_EGL_CreateContext(_THIS, SDL_Window* window)
     defs.minor = _this->gl_config.minor_version;
     defs.api = _this->gl_config.profile_mask == SDL_GL_CONTEXT_PROFILE_ES ?
         API_GLES : API_OPENGL;
-    TRACE("requested: %d, %d\n", _this->gl_config.major_version, _this->gl_config.minor_version);
-    arcan_shmifext_setup(wnd->con, defs);
-    arcan_shmifext_make_current(wnd->con);
-    arcan_shmifext_bind(wnd->con);
+    return defs;
+}
+
+struct GLContext {
+    struct arcan_shmif_cont* con;
+    Arcan_WindowData* wnd;
+    unsigned ind;
+};
+
+SDL_GLContext
+Arcan_EGL_CreateContext(_THIS, SDL_Window* window)
+{
+    Arcan_WindowData* wnd = window->driverdata;
+    struct GLContext* context = SDL_calloc(sizeof(struct GLContext), 1);
+    TRACE("CreateContext");
+
+    if (!context)
+        return NULL;
 
 #define LOOKUP(X) arcan_shmifext_lookup(wnd->con, X);
     glocBindFramebuffer = LOOKUP("glBindFramebuffer");
@@ -155,29 +163,52 @@ Arcan_EGL_CreateContext(_THIS, SDL_Window* window)
     glocGetIntegerv = LOOKUP("glocGetIntegerv");
 #undef LOOKUP
 
-    return (SDL_GLContext) wnd;
+    context->con = wnd->con;
+    context->wnd = wnd;
+    if (!wnd->got_context){
+        wnd->got_context = true;
+        context->ind = 1;
+    }
+    else
+        context->ind = arcan_shmifext_add_context(wnd->con,
+                                                  Arcan_GL_cfg(_this, window));
+    return context;
 }
 
 void
 Arcan_EGL_DeleteContext(_THIS, SDL_GLContext context)
 {
-    Arcan_WindowData* wnd = (Arcan_WindowData*) context;
     TRACE("Delete Context\n");
-    arcan_shmifext_drop_context(wnd->con);
-//    Arcan_WindowData* wnd = (Arcan_WindowData*) context;
-    TRACE("Delete Context\n");
-//    arcan_shmifext_drop(wnd->con);
+    if (context){
+        struct GLContext* glctx = (struct GLContext*) context;
+
+/* Special case, in Arcan, converting to an accelerated connection implies
+ * creating a context - they are not separate. It's possible to create new
+ * ones and attach/swap but there's the one. SDL does some fugly probing by
+ * creating and destroying contexts, which affects the 'builtin-' one. */
+
+        if (glctx->ind == 1){
+            glctx->wnd->got_context = false;
+        }
+        else {
+            arcan_shmifext_swap_context(glctx->con, glctx->ind);
+            arcan_shmifext_drop_context(glctx->con);
+        }
+
+        SDL_free(glctx);
+    }
 }
 
 int
 Arcan_EGL_MakeCurrent(_THIS, SDL_Window* window, SDL_GLContext context)
 {
-    Arcan_WindowData *wnd = (Arcan_WindowData*) context;
-    if (!wnd)
-        return SDL_SetError("bad context");
+    struct GLContext* glctx = (struct GLContext*) context;
+    if (glctx){
+        arcan_shmifext_swap_context(glctx->con, glctx->ind);
+        arcan_shmifext_make_current(glctx->con);
 
-    arcan_shmifext_make_current(wnd->con);
-    current = wnd->con;
+        current = glctx->con;
+    }
     return 0;
 }
 #endif /* SDL_VIDEO_DRIVER_Arcan */

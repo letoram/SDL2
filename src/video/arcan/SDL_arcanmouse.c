@@ -86,7 +86,6 @@ static SDL_Cursor* allocCursor(const char* system,
                                                  NULL, SEGID_CURSOR, 0);
             }
             else{
-                printf("parent REJECTED cursor\n");
                 wd->cursor_reject = true;
             }
 
@@ -101,6 +100,8 @@ static SDL_Cursor* allocCursor(const char* system,
 
         data->hot_x = hot_x;
         data->hot_y = hot_y;
+        data->w = surf->w;
+        data->h = surf->h;
     }
 
     cursor->driverdata = (void *) data;
@@ -114,7 +115,6 @@ static SDL_Cursor* allocCursor(const char* system,
             free(data);
             return NULL;
        }
-       printf("created normal cursor\n");
     }
     else {
         snprintf(data->cursor_type, 64, "%s", system);
@@ -187,7 +187,30 @@ Arcan_FreeCursor(SDL_Cursor *cursor)
 
 static void synchCursor(struct arcan_shmif_cont *dst, Arcan_CursorData *cd)
 {
-    printf("missing, resize/set cursor\n");
+/* anti tearing precaution, being limited to cursor should only happen in
+ * rare cases of bugs / abuse */
+    while (dst->addr->vready){}
+
+/* FIXME:
+ * only synch if the cursor is different from the last one */
+
+    if (cd->w > dst->w || cd->h > dst->h){
+        if (!arcan_shmif_resize(dst, cd->w, cd->h))
+            return;
+        memset(dst->vidb, '\0', dst->h * dst->stride);
+    }
+
+/* assumes no padding/alignment for buffer */
+    for (size_t y = 0; y < cd->h; y++){
+        memcpy(
+               &dst->vidp[dst->pitch * y],
+               &cd->buffer[y * cd->w],
+               sizeof(shmif_pixel) * cd->w
+              );
+    }
+
+/* FIXME: set hotspot to match */
+    arcan_shmif_signal(dst, SHMIF_SIGVID | SHMIF_SIGBLK_NONE);
 }
 
 static int
@@ -195,11 +218,11 @@ Arcan_ShowCursor(SDL_Cursor *cursor)
 {
     SDL_VideoDevice *vd = SDL_GetVideoDevice();
     Arcan_SDL_Meta *d = vd->driverdata;
-    Arcan_CursorData *cd = cursor->driverdata;
 
 /* need to handle both system-labels and those that require buffer synch */
     if (cursor)
     {
+        Arcan_CursorData *cd = cursor->driverdata;
         struct arcan_shmif_cont *dst = &d->mcont;
         struct arcan_event outev = {
             .ext.kind = ARCAN_EVENT(CURSORHINT)
@@ -220,12 +243,6 @@ Arcan_ShowCursor(SDL_Cursor *cursor)
     else
     {
         if (d->cursor.addr){
-            arcan_shmif_enqueue(&d->cursor, &(struct arcan_event){
-                .ext.kind = ARCAN_EVENT(VIEWPORT),
-                .ext.viewport.invisible = true
-            });
-        }
-        else {
             arcan_shmif_enqueue(&d->mcont, &(struct arcan_event){
                 .ext.kind = ARCAN_EVENT(CURSORHINT),
                 .ext.message.data = "hidden"

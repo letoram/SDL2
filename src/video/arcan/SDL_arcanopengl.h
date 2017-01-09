@@ -42,6 +42,9 @@ enum arcan_fboop {
 	ARCAN_FBOOP_RESIZE
 };
 
+extern
+struct arcan_shmifext_setup Arcan_GL_cfg(_THIS, SDL_Window* window);
+
 extern void
 Arcan_GL_SetupFBO(_THIS, Arcan_WindowData* window, enum arcan_fboop);
 

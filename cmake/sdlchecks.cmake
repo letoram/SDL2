@@ -692,7 +692,7 @@ endmacro()
 # Requires pkgtool
 macro(CheckArcan)
   if(DRIVER_ARCAN)
-		pkg_check_modules(PKG_ASHMIF arcan-shmif)
+		pkg_check_modules(PKG_ASHMIF arcan-shmif arcan-shmif-ext)
     if(PKG_ASHMIF_FOUND)
 			list(APPEND EXTRA_CFLAGS ${PKG_ASHMIF_CFLAGS})
       set(HAVE_VIDEO_ARCAN TRUE)

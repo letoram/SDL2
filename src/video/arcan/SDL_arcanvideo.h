@@ -57,6 +57,7 @@ typedef struct {
     int index;
     struct arcan_shmif_cont *con;
     int disp_w, disp_h;
+    bool got_context;
 } Arcan_WindowData;
 
 /*

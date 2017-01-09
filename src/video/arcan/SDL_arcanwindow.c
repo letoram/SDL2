@@ -105,10 +105,11 @@ Arcan_CreateWindow(_THIS, SDL_Window* window)
     if (window->flags & SDL_WINDOW_OPENGL){
         data->con->hints = SHMIF_RHINT_ORIGO_LL;
         arcan_shmif_resize(data->con, window->w, window->h);
-        arcan_shmifext_bind(data->con);
+        arcan_shmifext_setup(data->con, Arcan_GL_cfg(_this, window));
     }
     else{
         data->con->hints = 0;
+        arcan_shmifext_drop(data->con);
         arcan_shmif_resize(data->con, window->w, window->h);
     }
     window->w = data->con->w;
@@ -126,9 +127,11 @@ Arcan_DestroyWindow(_THIS, SDL_Window* window)
     Arcan_WindowData *data = window->driverdata;
     TRACE("DestroyWindow");
 
+    arcan_shmifext_drop(data->con);
+
+/* FIXME: send viewport hint to hide main connection */
     if (meta->main == window){
         meta->main = NULL;
-/* FIXME: send viewport hint to hide main connection */
     }
     else {
     /* only need to clear pqueue on the mcont */
@@ -138,6 +141,7 @@ Arcan_DestroyWindow(_THIS, SDL_Window* window)
             data->con = NULL;
         }
     }
+
     SDL_free(window->driverdata);
     window->driverdata = NULL;
 }
@@ -148,9 +152,8 @@ Arcan_SetWindowFullscreen(_THIS, SDL_Window* window,
                           SDL_bool fullscreen)
 {
 /*
- * Not our decision, we can try a viewport hint.
- * Some games actually track this though, and repeatedly
- * check displayBounds to see if we match.
+ * Not our decision, we can try a viewport hint.  Some games actually track
+ * this though, and repeatedly check displayBounds to see if we match.
  */
     Arcan_WindowData *data = window->driverdata;
     TRACE("SetWindowFullscreen(%d)", fullscreen);
