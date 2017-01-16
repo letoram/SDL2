@@ -50,6 +50,9 @@ static const AudioBootStrap *const bootstrap[] = {
 #if SDL_AUDIO_DRIVER_OSS
     &DSP_bootstrap,
 #endif
+#if SDL_AUDO_DRIVER_ARCAN
+    &Arcan_bootstrap,
+#endif
 #if SDL_AUDIO_DRIVER_QSA
     &QSAAUDIO_bootstrap,
 #endif

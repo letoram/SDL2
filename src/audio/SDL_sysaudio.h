@@ -214,6 +214,9 @@ extern AudioBootStrap NAS_bootstrap;
 #if SDL_AUDIO_DRIVER_XAUDIO2
 extern AudioBootStrap XAUDIO2_bootstrap;
 #endif
+#if SDL_AUDIO_DRIVER_ARCAN
+extern AudioBootStrap Arcan_bootstrap;
+#endif
 #if SDL_AUDIO_DRIVER_DSOUND
 extern AudioBootStrap DSOUND_bootstrap;
 #endif

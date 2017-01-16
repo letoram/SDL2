@@ -33,7 +33,7 @@
 
 /* Make sure that this isn't included by Visual C++ */
 #ifdef _MSC_VER
-#error You should run hg revert SDL_config.h 
+#error You should run hg revert SDL_config.h
 #endif
 
 /* C language features */
@@ -208,6 +208,8 @@
 #undef SDL_AUDIO_DRIVER_ARTS_DYNAMIC
 #undef SDL_AUDIO_DRIVER_PULSEAUDIO
 #undef SDL_AUDIO_DRIVER_PULSEAUDIO_DYNAMIC
+#undef SDL_AUDO_DRIVER_ARCAN
+#undef SDL_AUDO_DRIVER_ARCAN_DYNAMIC
 #undef SDL_AUDIO_DRIVER_HAIKU
 #undef SDL_AUDIO_DRIVER_BSD
 #undef SDL_AUDIO_DRIVER_COREAUDIO
@@ -290,6 +292,8 @@
 #undef SDL_VIDEO_DRIVER_MIR_DYNAMIC_XKBCOMMON
 #undef SDL_VIDEO_DRIVER_X11
 #undef SDL_VIDEO_DRIVER_RPI
+#undef SDL_VIDEO_DRIVER_ARCAN
+#undef SDL_VIDEO_DRIVER_ARCAN_DYNAMIC
 #undef SDL_VIDEO_DRIVER_ANDROID
 #undef SDL_VIDEO_DRIVER_EMSCRIPTEN
 #undef SDL_VIDEO_DRIVER_X11_DYNAMIC
