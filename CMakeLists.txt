@@ -2,7 +2,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
   message(FATAL_ERROR "Prevented in-tree built. Please create a build directory outside of the SDL source code and call cmake from there")
 endif()
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.5)
 project(SDL2 C)
 
 # !!! FIXME: this should probably do "MACOSX_RPATH ON" as a target property
@@ -26,6 +26,7 @@ include(CheckTypeSize)
 include(CheckStructHasMember)
 include(CMakeDependentOption)
 include(FindPkgConfig)
+include(GNUInstallDirs)
 set(CMAKE_MODULE_PATH "${SDL2_SOURCE_DIR}/cmake")
 include(${SDL2_SOURCE_DIR}/cmake/macros.cmake)
 include(${SDL2_SOURCE_DIR}/cmake/sdlchecks.cmake)
@@ -40,9 +41,9 @@ include(${SDL2_SOURCE_DIR}/cmake/sdlchecks.cmake)
 # set SDL_BINARY_AGE and SDL_INTERFACE_AGE to 0.
 set(SDL_MAJOR_VERSION 2)
 set(SDL_MINOR_VERSION 0)
-set(SDL_MICRO_VERSION 4)
-set(SDL_INTERFACE_AGE 0)
-set(SDL_BINARY_AGE 4)
+set(SDL_MICRO_VERSION 5)
+set(SDL_INTERFACE_AGE 1)
+set(SDL_BINARY_AGE 5)
 set(SDL_VERSION "${SDL_MAJOR_VERSION}.${SDL_MINOR_VERSION}.${SDL_MICRO_VERSION}")
 
 # Calculate a libtool-like version number
@@ -196,8 +197,8 @@ endif()
 set(SDL_LIBS "-lSDL2")
 set(SDL_CFLAGS "")
 
-# Emscripten toolchain has a nonempty default value for this, and the checks
-# in this file need to change that, so remember the original value, and
+# Emscripten toolchain has a nonempty default value for this, and the checks 
+# in this file need to change that, so remember the original value, and 
 # restore back to that afterwards. For check_function_exists() to work in
 # Emscripten, this value must be at its default value.
 set(ORIG_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
@@ -205,7 +206,7 @@ set(ORIG_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
 if(CYGWIN)
   # We build SDL on cygwin without the UNIX emulation layer
   include_directories("-I/usr/include/mingw")
-  set(CMAKE_REQUIRED_FLAGS "-mno-cygwin")
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mno-cygwin")
   check_c_source_compiles("int main(int argc, char **argv) {}"
     HAVE_GCC_NO_CYGWIN)
   set(CMAKE_REQUIRED_FLAGS ${ORIG_CMAKE_REQUIRED_FLAGS})
@@ -225,7 +226,7 @@ include_directories(${SDL2_BINARY_DIR}/include ${SDL2_SOURCE_DIR}/include)
 set(OPT_DEF_ASM TRUE)
 if(EMSCRIPTEN)
   # Set up default values for the currently supported set of subsystems:
-  # Emscripten/Javascript does not have assembly support, a dynamic library
+  # Emscripten/Javascript does not have assembly support, a dynamic library 
   # loading architecture, low-level CPU inspection or multithreading.
   set(OPT_DEF_ASM FALSE)
   set(SDL_SHARED_ENABLED_BY_DEFAULT OFF)
@@ -266,8 +267,6 @@ set_option(DISKAUDIO           "Support the disk writer audio driver" ON)
 set_option(DUMMYAUDIO          "Support the dummy audio driver" ON)
 set_option(VIDEO_DIRECTFB      "Use DirectFB video driver" OFF)
 dep_option(DIRECTFB_SHARED     "Dynamically load directfb support" ON "VIDEO_DIRECTFB" OFF)
-set_option(FUSIONSOUND         "Use FusionSound audio driver" OFF)
-dep_option(FUSIONSOUND_SHARED  "Dynamically load fusionsound audio support" ON "FUSIONSOUND" OFF)
 set_option(VIDEO_DUMMY         "Use dummy video driver" ON)
 set_option(VIDEO_OPENGL        "Include OpenGL support" ON)
 set_option(VIDEO_OPENGLES      "Include OpenGL ES support" ON)
@@ -286,6 +285,10 @@ dep_option(ARTS_SHARED         "Dynamically load aRts audio support" ON "ARTS" O
 set_option(NAS                 "Support the NAS audio API" ${UNIX_SYS})
 set_option(NAS_SHARED          "Dynamically load NAS audio API" ${UNIX_SYS})
 set_option(SNDIO               "Support the sndio audio API" ${UNIX_SYS})
+set_option(FUSIONSOUND         "Use FusionSound audio driver" OFF)
+dep_option(FUSIONSOUND_SHARED  "Dynamically load fusionsound audio support" ON "FUSIONSOUND" OFF)
+set_option(LIBSAMPLERATE       "Use libsamplerate for audio rate conversion" ${UNIX_SYS})
+dep_option(LIBSAMPLERATE_SHARED "Dynamically load libsamplerate" ON "LIBSAMPLERATE" OFF)
 set_option(RPATH               "Use an rpath when linking SDL" ${UNIX_SYS})
 set_option(CLOCK_GETTIME       "Use clock_gettime() instead of gettimeofday()" OFF)
 set_option(INPUT_TSLIB         "Use the Touchscreen library for input" ${UNIX_SYS})
@@ -296,8 +299,6 @@ dep_option(VIDEO_WAYLAND_QT_TOUCH  "QtWayland server support for Wayland video d
 set_option(VIDEO_MIR           "Use Mir video driver" ${UNIX_SYS})
 dep_option(MIR_SHARED          "Dynamically load Mir support" ON "VIDEO_MIR" OFF)
 set_option(VIDEO_RPI           "Use Raspberry Pi video driver" ${UNIX_SYS})
-set_option(DRIVER_ARCAN        "Use Arcan Audio/Video driver" ${UNIX_SYS})
-set_option(ARCAN_SHARED        "Dynamically load Arcan support" ON "VIDEO_ARCAN" OFF)
 dep_option(X11_SHARED          "Dynamically load X11 support" ON "VIDEO_X11" OFF)
 set(SDL_X11_OPTIONS Xcursor Xinerama XInput Xrandr Xscrnsaver XShape Xvm)
 foreach(_SUB ${SDL_X11_OPTIONS})
@@ -616,7 +617,7 @@ if(LIBC)
             _uitoa _ultoa strtol strtoul _i64toa _ui64toa strtoll strtoull
             atoi atof strcmp strncmp _stricmp strcasecmp _strnicmp strncasecmp
             vsscanf vsnprintf fseeko fseeko64 sigaction setjmp
-            nanosleep sysconf sysctlbyname
+            nanosleep sysconf sysctlbyname getauxval
             )
       string(TOUPPER ${_FN} _UPPER)
       set(_HAVEVAR "HAVE_${_UPPER}")
@@ -798,6 +799,16 @@ if(EMSCRIPTEN)
     set(SOURCE_FILES ${SOURCE_FILES} ${EM_POWER_SOURCES})
     set(HAVE_SDL_POWER TRUE)
   endif()
+  if(SDL_TIMERS)
+    set(SDL_TIMER_UNIX 1)
+    file(GLOB TIMER_SOURCES ${SDL2_SOURCE_DIR}/src/timer/unix/*.c)
+    set(SOURCE_FILES ${SOURCE_FILES} ${TIMER_SOURCES})
+    set(HAVE_SDL_TIMERS TRUE)
+
+    if(CLOCK_GETTIME)
+      set(HAVE_CLOCK_GETTIME 1)
+    endif()
+  endif()
   if(SDL_VIDEO)
     set(SDL_VIDEO_DRIVER_EMSCRIPTEN 1)
     file(GLOB EM_VIDEO_SOURCES ${SDL2_SOURCE_DIR}/src/video/emscripten/*.c)
@@ -838,6 +849,7 @@ elseif(UNIX AND NOT APPLE)
     CheckNAS()
     CheckSNDIO()
     CheckFusionSound()
+    CheckLibSampleRate()
   endif()
 
   if(SDL_VIDEO)
@@ -850,7 +862,6 @@ elseif(UNIX AND NOT APPLE)
     CheckOpenGLESX11()
     CheckWayland()
     CheckVivante()
-		CheckArcan()
   endif()
 
   if(LINUX)
@@ -865,7 +876,7 @@ elseif(UNIX AND NOT APPLE)
         #include <linux/kd.h>
         #include <linux/keyboard.h>
 
-        int main(int argc, char **argv)
+        int main(int argc, char **argv) 
         {
             struct kbentry kbe;
             kbe.kb_table = KG_CTRL;
@@ -892,8 +903,24 @@ elseif(UNIX AND NOT APPLE)
 
     check_include_file("libudev.h" HAVE_LIBUDEV_H)
 
-    # !!! FIXME: this needs pkg-config to find the include path, I think.
-    check_include_file("dbus/dbus.h" HAVE_DBUS_DBUS_H)
+    if(PKG_CONFIG_FOUND)
+      pkg_search_module(DBUS dbus-1 dbus)
+      if(DBUS_FOUND)
+        set(HAVE_DBUS_DBUS_H TRUE)
+        include_directories(${DBUS_INCLUDE_DIRS})
+        list(APPEND EXTRA_LIBS ${DBUS_LIBRARIES})
+      endif()
+
+      pkg_search_module(IBUS ibus-1.0 ibus)
+      if(IBUS_FOUND)
+        set(HAVE_IBUS_IBUS_H TRUE)
+        include_directories(${IBUS_INCLUDE_DIRS})
+        list(APPEND EXTRA_LIBS ${IBUS_LIBRARIES})
+      endif()
+    endif()
+
+    check_include_file("fcitx/frontend.h" HAVE_FCITX_FRONTEND_H)
+
   endif()
 
   if(INPUT_TSLIB)
@@ -1199,16 +1226,20 @@ elseif(APPLE)
 
   if(SDL_AUDIO)
     set(SDL_AUDIO_DRIVER_COREAUDIO 1)
-    file(GLOB AUDIO_SOURCES ${SDL2_SOURCE_DIR}/src/audio/coreaudio/*.c)
+    file(GLOB AUDIO_SOURCES ${SDL2_SOURCE_DIR}/src/audio/coreaudio/*.m)
     set(SOURCE_FILES ${SOURCE_FILES} ${AUDIO_SOURCES})
     set(HAVE_SDL_AUDIO TRUE)
     set(SDL_FRAMEWORK_COREAUDIO 1)
-    set(SDL_FRAMEWORK_AUDIOUNIT 1)
+    set(SDL_FRAMEWORK_AUDIOTOOLBOX 1)
   endif()
 
   if(SDL_JOYSTICK)
     set(SDL_JOYSTICK_IOKIT 1)
-    file(GLOB JOYSTICK_SOURCES ${SDL2_SOURCE_DIR}/src/joystick/darwin/*.c)
+    if (IOS)
+      file(GLOB JOYSTICK_SOURCES ${SDL2_SOURCE_DIR}/src/joystick/iphoneos/*.m)
+    else()
+      file(GLOB JOYSTICK_SOURCES ${SDL2_SOURCE_DIR}/src/joystick/darwin/*.c)
+    endif()
     set(SOURCE_FILES ${SOURCE_FILES} ${JOYSTICK_SOURCES})
     set(HAVE_SDL_JOYSTICK TRUE)
     set(SDL_FRAMEWORK_IOKIT 1)
@@ -1217,7 +1248,12 @@ elseif(APPLE)
 
   if(SDL_HAPTIC)
     set(SDL_HAPTIC_IOKIT 1)
-    file(GLOB HAPTIC_SOURCES ${SDL2_SOURCE_DIR}/src/haptic/darwin/*.c)
+    if (IOS)
+      file(GLOB POWER_SOURCES ${SDL2_SOURCE_DIR}/src/power/dummy/*.c)
+      set(SDL_HAPTIC_DUMMY 1)
+    else()
+      file(GLOB HAPTIC_SOURCES ${SDL2_SOURCE_DIR}/src/haptic/darwin/*.c)
+    endif()
     set(SOURCE_FILES ${SOURCE_FILES} ${HAPTIC_SOURCES})
     set(HAVE_SDL_HAPTIC TRUE)
     set(SDL_FRAMEWORK_IOKIT 1)
@@ -1229,7 +1265,11 @@ elseif(APPLE)
 
   if(SDL_POWER)
     set(SDL_POWER_MACOSX 1)
-    file(GLOB POWER_SOURCES ${SDL2_SOURCE_DIR}/src/power/macosx/*.c)
+    if (IOS)
+      file(GLOB POWER_SOURCES ${SDL2_SOURCE_DIR}/src/power/uikit/*.m)
+    else()
+      file(GLOB POWER_SOURCES ${SDL2_SOURCE_DIR}/src/power/macosx/*.c)
+    endif()
     set(SOURCE_FILES ${SOURCE_FILES} ${POWER_SOURCES})
     set(HAVE_SDL_POWER TRUE)
     set(SDL_FRAMEWORK_CARBON 1)
@@ -1276,19 +1316,25 @@ elseif(APPLE)
     find_library(COREAUDIO CoreAudio)
     list(APPEND EXTRA_LIBS ${COREAUDIO})
   endif()
-  if(SDL_FRAMEWORK_AUDIOUNIT)
-    find_library(AUDIOUNIT AudioUnit)
-    list(APPEND EXTRA_LIBS ${AUDIOUNIT})
+  if(SDL_FRAMEWORK_AUDIOTOOLBOX)
+    find_library(AUDIOTOOLBOX AudioToolbox)
+    list(APPEND EXTRA_LIBS ${AUDIOTOOLBOX})
   endif()
 
   # iOS hack needed - http://code.google.com/p/ios-cmake/ ?
   if(SDL_VIDEO)
-    CheckCOCOA()
-    if(VIDEO_OPENGL)
-      set(SDL_VIDEO_OPENGL 1)
-      set(SDL_VIDEO_OPENGL_CGL 1)
-      set(SDL_VIDEO_RENDER_OGL 1)
-      set(HAVE_VIDEO_OPENGL TRUE)
+    if (IOS)
+      set(SDL_VIDEO_DRIVER_UIKIT 1)
+      file(GLOB UIKITVIDEO_SOURCES ${SDL2_SOURCE_DIR}/src/video/uikit/*.m)
+      set(SOURCE_FILES ${SOURCE_FILES} ${UIKITVIDEO_SOURCES})
+    else()
+      CheckCOCOA()
+      if(VIDEO_OPENGL)
+        set(SDL_VIDEO_OPENGL 1)
+        set(SDL_VIDEO_OPENGL_CGL 1)
+        set(SDL_VIDEO_RENDER_OGL 1)
+        set(HAVE_VIDEO_OPENGL TRUE)
+      endif()
     endif()
   endif()
 
@@ -1494,7 +1540,7 @@ add_library(SDL2main STATIC ${SDLMAIN_SOURCES})
 set(_INSTALL_LIBS "SDL2main")
 
 if(SDL_SHARED)
-  add_library(SDL2 SHARED ${SOURCE_FILES})
+  add_library(SDL2 SHARED ${SOURCE_FILES} ${VERSION_SOURCES})
   if(UNIX)
     set_target_properties(SDL2 PROPERTIES
       VERSION ${LT_VERSION}
@@ -1568,7 +1614,7 @@ if(NOT (WINDOWS OR CYGWIN))
   endif()
   install(PROGRAMS ${SDL2_BINARY_DIR}/sdl2-config DESTINATION bin)
   # TODO: what about the .spec file? Is it only needed for RPM creation?
-  install(FILES "${SDL2_SOURCE_DIR}/sdl2.m4" DESTINATION "share/aclocal")
+  install(FILES "${SDL2_SOURCE_DIR}/sdl2.m4" DESTINATION "${CMAKE_INSTALL_FULL_DATAROOTDIR}/aclocal")
 endif()
 
 ##### Uninstall target #####
