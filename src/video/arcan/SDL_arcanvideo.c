@@ -303,7 +303,7 @@ Arcan_CreateDevice(int device_index)
     device->GL_GetProcAddress  = Arcan_EGL_GetProcAddress;
 
     /* arcanwindow */
-    device->CreateWindow         = Arcan_CreateWindow;
+    device->CreateSDLWindow      = Arcan_CreateWindow;
     device->DestroyWindow        = Arcan_DestroyWindow;
     device->GetWindowWMInfo      = Arcan_GetWindowWMInfo;
     device->SetWindowFullscreen  = Arcan_SetWindowFullscreen;
@@ -317,7 +317,7 @@ Arcan_CreateDevice(int device_index)
     device->SetWindowMaximumSize = Arcan_SetWindowMaximumSize;
     device->SetWindowTitle       = Arcan_SetWindowTitle;
 
-    device->CreateWindowFrom     = NULL;
+    device->CreateSDLWindowFrom  = NULL;
     /* set as pending, request subsegment, on accept, bind and draw */
     device->SetWindowIcon        = NULL;
     device->RaiseWindow          = NULL;

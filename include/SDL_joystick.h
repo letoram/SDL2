@@ -71,7 +71,28 @@ typedef struct {
     Uint8 data[16];
 } SDL_JoystickGUID;
 
+/**
+ * This is a unique ID for a joystick for the time it is connected to the system,
+ * and is never reused for the lifetime of the application. If the joystick is
+ * disconnected and reconnected, it will get a new ID.
+ *
+ * The ID value starts at 0 and increments from there. The value -1 is an invalid ID.
+ */
 typedef Sint32 SDL_JoystickID;
+
+typedef enum
+{
+    SDL_JOYSTICK_TYPE_UNKNOWN,
+    SDL_JOYSTICK_TYPE_GAMECONTROLLER,
+    SDL_JOYSTICK_TYPE_WHEEL,
+    SDL_JOYSTICK_TYPE_ARCADE_STICK,
+    SDL_JOYSTICK_TYPE_FLIGHT_STICK,
+    SDL_JOYSTICK_TYPE_DANCE_PAD,
+    SDL_JOYSTICK_TYPE_GUITAR,
+    SDL_JOYSTICK_TYPE_DRUM_KIT,
+    SDL_JOYSTICK_TYPE_ARCADE_PAD,
+    SDL_JOYSTICK_TYPE_THROTTLE
+} SDL_JoystickType;
 
 typedef enum
 {
@@ -125,6 +146,19 @@ extern DECLSPEC Uint16 SDLCALL SDL_JoystickGetDeviceProduct(int device_index);
 extern DECLSPEC Uint16 SDLCALL SDL_JoystickGetDeviceProductVersion(int device_index);
 
 /**
+ *  Get the type of a joystick, if available.
+ *  This can be called before any joysticks are opened.
+ */
+extern DECLSPEC SDL_JoystickType SDLCALL SDL_JoystickGetDeviceType(int device_index);
+
+/**
+ *  Get the instance ID of a joystick.
+ *  This can be called before any joysticks are opened.
+ *  If the index is out of range, this function will return -1.
+ */
+extern DECLSPEC SDL_JoystickID SDLCALL SDL_JoystickGetDeviceInstanceID(int device_index);
+
+/**
  *  Open a joystick for use.
  *  The index passed as an argument refers to the N'th joystick on the system.
  *  This index is not the value which will identify this joystick in future
@@ -168,6 +202,11 @@ extern DECLSPEC Uint16 SDLCALL SDL_JoystickGetProduct(SDL_Joystick * joystick);
  *  If the product version isn't available this function returns 0.
  */
 extern DECLSPEC Uint16 SDLCALL SDL_JoystickGetProductVersion(SDL_Joystick * joystick);
+
+/**
+ *  Get the type of an opened joystick.
+ */
+extern DECLSPEC SDL_JoystickType SDLCALL SDL_JoystickGetType(SDL_Joystick * joystick);
 
 /**
  *  Return a string representation for this guid. pszGUID must point to at least 33 bytes

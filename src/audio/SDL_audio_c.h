@@ -39,6 +39,7 @@
 #ifdef HAVE_LIBSAMPLERATE_H
 #include "samplerate.h"
 extern SDL_bool SRC_available;
+extern int SRC_converter;
 extern SRC_STATE* (*SRC_src_new)(int converter_type, int channels, int *error);
 extern int (*SRC_src_process)(SRC_STATE *state, SRC_DATA *data);
 extern int (*SRC_src_reset)(SRC_STATE *state);
@@ -53,16 +54,20 @@ extern SDL_AudioFormat SDL_NextAudioFormat(void);
 /* Function to calculate the size and silence for a SDL_AudioSpec */
 extern void SDL_CalculateAudioSpec(SDL_AudioSpec * spec);
 
-void SDLCALL SDL_Convert_S8_to_F32(SDL_AudioCVT *cvt, SDL_AudioFormat format);
-void SDLCALL SDL_Convert_U8_to_F32(SDL_AudioCVT *cvt, SDL_AudioFormat format);
-void SDLCALL SDL_Convert_S16_to_F32(SDL_AudioCVT *cvt, SDL_AudioFormat format);
-void SDLCALL SDL_Convert_U16_to_F32(SDL_AudioCVT *cvt, SDL_AudioFormat format);
-void SDLCALL SDL_Convert_S32_to_F32(SDL_AudioCVT *cvt, SDL_AudioFormat format);
-void SDLCALL SDL_Convert_F32_to_S8(SDL_AudioCVT *cvt, SDL_AudioFormat format);
-void SDLCALL SDL_Convert_F32_to_U8(SDL_AudioCVT *cvt, SDL_AudioFormat format);
-void SDLCALL SDL_Convert_F32_to_S16(SDL_AudioCVT *cvt, SDL_AudioFormat format);
-void SDLCALL SDL_Convert_F32_to_U16(SDL_AudioCVT *cvt, SDL_AudioFormat format);
-void SDLCALL SDL_Convert_F32_to_S32(SDL_AudioCVT *cvt, SDL_AudioFormat format);
+/* Choose the audio filter functions below */
+extern void SDL_ChooseAudioConverters(void);
+
+/* These pointers get set during SDL_ChooseAudioConverters() to various SIMD implementations. */
+extern SDL_AudioFilter SDL_Convert_S8_to_F32;
+extern SDL_AudioFilter SDL_Convert_U8_to_F32;
+extern SDL_AudioFilter SDL_Convert_S16_to_F32;
+extern SDL_AudioFilter SDL_Convert_U16_to_F32;
+extern SDL_AudioFilter SDL_Convert_S32_to_F32;
+extern SDL_AudioFilter SDL_Convert_F32_to_S8;
+extern SDL_AudioFilter SDL_Convert_F32_to_U8;
+extern SDL_AudioFilter SDL_Convert_F32_to_S16;
+extern SDL_AudioFilter SDL_Convert_F32_to_U16;
+extern SDL_AudioFilter SDL_Convert_F32_to_S32;
 
 
 /* SDL_AudioStream is a new audio conversion interface. It

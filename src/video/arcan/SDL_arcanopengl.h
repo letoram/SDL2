@@ -33,7 +33,7 @@
 #define Arcan_EGL_GetSwapInterval SDL_EGL_GetSwapInterval
 #define Arcan_EGL_SetSwapInterval SDL_EGL_SetSwapInterval
 
-extern void
+extern int
 Arcan_GL_SwapWindow(_THIS, SDL_Window* window);
 
 enum arcan_fboop {

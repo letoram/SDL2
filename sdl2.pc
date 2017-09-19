@@ -7,9 +7,9 @@ includedir=${prefix}/include
 
 Name: sdl2
 Description: Simple DirectMedia Layer is a cross-platform multimedia library designed to provide low level access to audio, keyboard, mouse, joystick, 3D hardware via OpenGL, and 2D video framebuffer.
-Version: 2.0.4
+Version: 2.0.6
 Requires:
 Conflicts:
 Libs: -L${libdir} -Wl,-rpath,${libdir} -Wl,--enable-new-dtags -lSDL2 
-Libs.private: -lSDL2   -Wl,--no-undefined -lm -ldl -L/usr/local/lib -larcan_shmif -lEGL -lpthread -lrt
+Libs.private: -lSDL2   -Wl,--no-undefined -lm -ldl -lsndio -L/usr/local/lib -larcan_shmif_ext -larcan_shmif -lEGL -lpthread -lrt
 Cflags: -I${includedir}/SDL2   -D_REENTRANT

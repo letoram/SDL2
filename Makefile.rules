@@ -11,6 +11,9 @@ $(objects)/SDL.lo: /home/vdw/intprj/SDL/src/SDL.c
 $(objects)/SDL_assert.lo: /home/vdw/intprj/SDL/src/SDL_assert.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
+$(objects)/SDL_dataqueue.lo: /home/vdw/intprj/SDL/src/SDL_dataqueue.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
 $(objects)/SDL_error.lo: /home/vdw/intprj/SDL/src/SDL_error.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
@@ -281,6 +284,9 @@ $(objects)/SDL_surface.lo: /home/vdw/intprj/SDL/src/video/SDL_surface.c
 $(objects)/SDL_video.lo: /home/vdw/intprj/SDL/src/video/SDL_video.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
+$(objects)/SDL_vulkan_utils.lo: /home/vdw/intprj/SDL/src/video/SDL_vulkan_utils.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
 $(objects)/SDL_nullevents.lo: /home/vdw/intprj/SDL/src/video/dummy/SDL_nullevents.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
@@ -306,6 +312,12 @@ $(objects)/SDL_alsa_audio.lo: /home/vdw/intprj/SDL/src/audio/alsa/SDL_alsa_audio
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
 $(objects)/SDL_pulseaudio.lo: /home/vdw/intprj/SDL/src/audio/pulseaudio/SDL_pulseaudio.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_jackaudio.lo: /home/vdw/intprj/SDL/src/audio/jack/SDL_jackaudio.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_sndioaudio.lo: /home/vdw/intprj/SDL/src/audio/sndio/SDL_sndioaudio.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
 $(objects)/SDL_x11clipboard.lo: /home/vdw/intprj/SDL/src/video/x11/SDL_x11clipboard.c
@@ -347,6 +359,9 @@ $(objects)/SDL_x11touch.lo: /home/vdw/intprj/SDL/src/video/x11/SDL_x11touch.c
 $(objects)/SDL_x11video.lo: /home/vdw/intprj/SDL/src/video/x11/SDL_x11video.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
+$(objects)/SDL_x11vulkan.lo: /home/vdw/intprj/SDL/src/video/x11/SDL_x11vulkan.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
 $(objects)/SDL_x11window.lo: /home/vdw/intprj/SDL/src/video/x11/SDL_x11window.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
@@ -359,25 +374,13 @@ $(objects)/edid-parse.lo: /home/vdw/intprj/SDL/src/video/x11/edid-parse.c
 $(objects)/imKStoUCS.lo: /home/vdw/intprj/SDL/src/video/x11/imKStoUCS.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
-$(objects)/SDL_mirdyn.lo: /home/vdw/intprj/SDL/src/video/mir/SDL_mirdyn.c
+$(objects)/SDL_arcanevent.lo: /home/vdw/intprj/SDL/src/video/arcan/SDL_arcanevent.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
-$(objects)/SDL_mirevents.lo: /home/vdw/intprj/SDL/src/video/mir/SDL_mirevents.c
+$(objects)/SDL_arcanframebuffer.lo: /home/vdw/intprj/SDL/src/video/arcan/SDL_arcanframebuffer.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
-$(objects)/SDL_mirframebuffer.lo: /home/vdw/intprj/SDL/src/video/mir/SDL_mirframebuffer.c
-	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
-
-$(objects)/SDL_mirmouse.lo: /home/vdw/intprj/SDL/src/video/mir/SDL_mirmouse.c
-	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
-
-$(objects)/SDL_miropengl.lo: /home/vdw/intprj/SDL/src/video/mir/SDL_miropengl.c
-	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
-
-$(objects)/SDL_mirvideo.lo: /home/vdw/intprj/SDL/src/video/mir/SDL_mirvideo.c
-	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
-
-$(objects)/SDL_mirwindow.lo: /home/vdw/intprj/SDL/src/video/mir/SDL_mirwindow.c
+$(objects)/SDL_arcanmouse.lo: /home/vdw/intprj/SDL/src/video/arcan/SDL_arcanmouse.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
 $(objects)/SDL_arcanopengl.lo: /home/vdw/intprj/SDL/src/video/arcan/SDL_arcanopengl.c
@@ -387,6 +390,15 @@ $(objects)/SDL_arcanvideo.lo: /home/vdw/intprj/SDL/src/video/arcan/SDL_arcanvide
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
 $(objects)/SDL_arcanwindow.lo: /home/vdw/intprj/SDL/src/video/arcan/SDL_arcanwindow.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_arcanaudio.lo: /home/vdw/intprj/SDL/src/audio/arcan/SDL_arcanaudio.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_waylandclipboard.lo: /home/vdw/intprj/SDL/src/video/wayland/SDL_waylandclipboard.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_waylanddatamanager.lo: /home/vdw/intprj/SDL/src/video/wayland/SDL_waylanddatamanager.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
 $(objects)/SDL_waylanddyn.lo: /home/vdw/intprj/SDL/src/video/wayland/SDL_waylanddyn.c
@@ -407,7 +419,19 @@ $(objects)/SDL_waylandtouch.lo: /home/vdw/intprj/SDL/src/video/wayland/SDL_wayla
 $(objects)/SDL_waylandvideo.lo: /home/vdw/intprj/SDL/src/video/wayland/SDL_waylandvideo.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
+$(objects)/SDL_waylandvulkan.lo: /home/vdw/intprj/SDL/src/video/wayland/SDL_waylandvulkan.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
 $(objects)/SDL_waylandwindow.lo: /home/vdw/intprj/SDL/src/video/wayland/SDL_waylandwindow.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_dbus.lo: /home/vdw/intprj/SDL/src/core/linux/SDL_dbus.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_ime.lo: /home/vdw/intprj/SDL/src/core/linux/SDL_ime.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_ibus.lo: /home/vdw/intprj/SDL/src/core/linux/SDL_ibus.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
 $(objects)/SDL_systhread.lo: /home/vdw/intprj/SDL/src/thread/pthread/SDL_systhread.c
@@ -446,37 +470,78 @@ $(objects)/SDL_udev.lo: /home/vdw/intprj/SDL/src/core/linux/SDL_udev.c
 $(objects)/SDL_evdev.lo: /home/vdw/intprj/SDL/src/core/linux/SDL_evdev.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
-
-$(objects)/SDL_dummy_main.o: /home/vdw/intprj/SDL/src/main/dummy/SDL_dummy_main.c
+$(objects)/SDL_evdev_kbd.lo: /home/vdw/intprj/SDL/src/core/linux/SDL_evdev_kbd.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
-$(objects)/SDL_test_assert.o: /home/vdw/intprj/SDL/src/test/SDL_test_assert.c
-	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
-$(objects)/SDL_test_common.o: /home/vdw/intprj/SDL/src/test/SDL_test_common.c
-	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
-$(objects)/SDL_test_compare.o: /home/vdw/intprj/SDL/src/test/SDL_test_compare.c
-	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
-$(objects)/SDL_test_crc32.o: /home/vdw/intprj/SDL/src/test/SDL_test_crc32.c
-	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
-$(objects)/SDL_test_font.o: /home/vdw/intprj/SDL/src/test/SDL_test_font.c
-	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
-$(objects)/SDL_test_fuzzer.o: /home/vdw/intprj/SDL/src/test/SDL_test_fuzzer.c
-	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
-$(objects)/SDL_test_harness.o: /home/vdw/intprj/SDL/src/test/SDL_test_harness.c
-	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
-$(objects)/SDL_test_imageBlit.o: /home/vdw/intprj/SDL/src/test/SDL_test_imageBlit.c
-	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
-$(objects)/SDL_test_imageBlitBlend.o: /home/vdw/intprj/SDL/src/test/SDL_test_imageBlitBlend.c
-	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
-$(objects)/SDL_test_imageFace.o: /home/vdw/intprj/SDL/src/test/SDL_test_imageFace.c
-	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
-$(objects)/SDL_test_imagePrimitives.o: /home/vdw/intprj/SDL/src/test/SDL_test_imagePrimitives.c
-	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
-$(objects)/SDL_test_imagePrimitivesBlend.o: /home/vdw/intprj/SDL/src/test/SDL_test_imagePrimitivesBlend.c
-	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
-$(objects)/SDL_test_log.o: /home/vdw/intprj/SDL/src/test/SDL_test_log.c
-	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
-$(objects)/SDL_test_md5.o: /home/vdw/intprj/SDL/src/test/SDL_test_md5.c
-	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
-$(objects)/SDL_test_random.o: /home/vdw/intprj/SDL/src/test/SDL_test_random.c
+$(objects)/SDL_poll.lo: /home/vdw/intprj/SDL/src/core/unix/SDL_poll.c
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+
+$(objects)/SDL_dummy_main.lo: /home/vdw/intprj/SDL/src/main/dummy/SDL_dummy_main.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/SDL_test_assert.lo: /home/vdw/intprj/SDL/src/test/SDL_test_assert.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
+$(objects)/SDL_test_common.lo: /home/vdw/intprj/SDL/src/test/SDL_test_common.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
+$(objects)/SDL_test_compare.lo: /home/vdw/intprj/SDL/src/test/SDL_test_compare.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
+$(objects)/SDL_test_crc32.lo: /home/vdw/intprj/SDL/src/test/SDL_test_crc32.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
+$(objects)/SDL_test_font.lo: /home/vdw/intprj/SDL/src/test/SDL_test_font.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
+$(objects)/SDL_test_fuzzer.lo: /home/vdw/intprj/SDL/src/test/SDL_test_fuzzer.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
+$(objects)/SDL_test_harness.lo: /home/vdw/intprj/SDL/src/test/SDL_test_harness.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
+$(objects)/SDL_test_imageBlit.lo: /home/vdw/intprj/SDL/src/test/SDL_test_imageBlit.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
+$(objects)/SDL_test_imageBlitBlend.lo: /home/vdw/intprj/SDL/src/test/SDL_test_imageBlitBlend.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
+$(objects)/SDL_test_imageFace.lo: /home/vdw/intprj/SDL/src/test/SDL_test_imageFace.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
+$(objects)/SDL_test_imagePrimitives.lo: /home/vdw/intprj/SDL/src/test/SDL_test_imagePrimitives.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
+$(objects)/SDL_test_imagePrimitivesBlend.lo: /home/vdw/intprj/SDL/src/test/SDL_test_imagePrimitivesBlend.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
+$(objects)/SDL_test_log.lo: /home/vdw/intprj/SDL/src/test/SDL_test_log.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
+$(objects)/SDL_test_md5.lo: /home/vdw/intprj/SDL/src/test/SDL_test_md5.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@ 
+$(objects)/SDL_test_random.lo: /home/vdw/intprj/SDL/src/test/SDL_test_random.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+
+$(gen)/wayland-protocol.c: /usr/local/share/wayland/wayland.xml
+	$(SHELL) $(auxdir)/mkinstalldirs $(gen)
+	$(RUN_CMD_GEN)$(WAYLAND_SCANNER) code $< $@
+
+$(gen)/wayland-client-protocol.h: /usr/local/share/wayland/wayland.xml
+	$(SHELL) $(auxdir)/mkinstalldirs $(gen)
+	$(RUN_CMD_GEN)$(WAYLAND_SCANNER) client-header $< $@
+
+$(objects)/wayland-protocol.lo: $(gen)/wayland-protocol.c
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(gen)/relative-pointer-unstable-v1-client-protocol.h: /usr/local/share/wayland-protocols/unstable/relative-pointer/relative-pointer-unstable-v1.xml
+	$(SHELL) $(auxdir)/mkinstalldirs $(gen)
+	$(RUN_CMD_GEN)$(WAYLAND_SCANNER) client-header $< $@
+
+$(gen)/pointer-constraints-unstable-v1-client-protocol.h: /usr/local/share/wayland-protocols/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml
+	$(SHELL) $(auxdir)/mkinstalldirs $(gen)
+	$(RUN_CMD_GEN)$(WAYLAND_SCANNER) client-header $< $@
+
+$(gen)/relative-pointer-unstable-v1-protocol.c: /usr/local/share/wayland-protocols/unstable/relative-pointer/relative-pointer-unstable-v1.xml
+	$(SHELL) $(auxdir)/mkinstalldirs $(gen)
+	$(RUN_CMD_GEN)$(WAYLAND_SCANNER) code $< $@
+
+$(gen)/pointer-constraints-unstable-v1-protocol.c: /usr/local/share/wayland-protocols/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml
+	$(SHELL) $(auxdir)/mkinstalldirs $(gen)
+	$(RUN_CMD_GEN)$(WAYLAND_SCANNER) code $< $@
+
+$(objects)/relative-pointer-unstable-v1-protocol.lo: $(gen)/relative-pointer-unstable-v1-protocol.c $(gen)/relative-pointer-unstable-v1-client-protocol.h
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
+$(objects)/pointer-constraints-unstable-v1-protocol.lo: $(gen)/pointer-constraints-unstable-v1-protocol.c $(gen)/pointer-constraints-unstable-v1-client-protocol.h
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+

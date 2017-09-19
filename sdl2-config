@@ -39,7 +39,7 @@ while test $# -gt 0; do
       echo $exec_prefix
       ;;
     --version)
-      echo 2.0.4
+      echo 2.0.6
       ;;
     --cflags)
       echo -I${prefix}/include/SDL2   -D_REENTRANT
@@ -49,7 +49,7 @@ while test $# -gt 0; do
       ;;
     --static-libs)
 #    --libs|--static-libs)
-      echo -L${exec_prefix}/lib -Wl,-rpath,${libdir} -Wl,--enable-new-dtags -lSDL2   -Wl,--no-undefined -lm -ldl -L/usr/local/lib -larcan_shmif -lEGL -lpthread -lrt
+      echo -L${exec_prefix}/lib -Wl,-rpath,${libdir} -Wl,--enable-new-dtags -lSDL2   -Wl,--no-undefined -lm -ldl -lsndio -L/usr/local/lib -larcan_shmif_ext -larcan_shmif -lEGL -lpthread -lrt
       ;;
     *)
       echo "${usage}" 1>&2

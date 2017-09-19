@@ -55,7 +55,7 @@ static struct arcan_shmif_cont* current;
  * the FBO bound before they get control, so we will have to settle for
  * swapping color attachment (shmif builtin_fbo can do both)
  */
-void
+int
 Arcan_GL_SwapWindow(_THIS, SDL_Window* window)
 {
     Arcan_WindowData* wnd = window->driverdata;
@@ -64,6 +64,7 @@ Arcan_GL_SwapWindow(_THIS, SDL_Window* window)
     arcan_shmifext_signal(wnd->con, 0, SHMIF_SIGVID, SHMIFEXT_BUILTIN);
     arcan_shmifext_bind(wnd->con);
     current = wnd->con;
+    return 0;
 }
 
 /* shmifext links to the related EGL/GL library already */
